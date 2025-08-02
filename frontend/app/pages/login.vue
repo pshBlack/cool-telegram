@@ -3,9 +3,9 @@ import { Input } from "@/components/ui/input";
 import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
 import * as z from "zod";
-
 import {
   FormControl,
+  Form,
   FormDescription,
   FormField,
   FormItem,
@@ -31,7 +31,6 @@ const onSubmit = form.handleSubmit((values) => {
 </script>
 
 <template>
-  <!-- <Input class="bg-[#4a444d]" placeholder="Username"></Input> -->
   <div class="flex flex-col justify-center items-center h-screen">
     <div
       class="bg-[#312c32] min-h-[533px] sm:min-w-[400px] min-w-[350px] rounded-2xl flex flex-col items-center"
@@ -40,61 +39,54 @@ const onSubmit = form.handleSubmit((values) => {
         >Registration Form</span
       >
       <form
-        @submit="onSubmit"
-        class="bg-[#413b43] w-90 h-110 mt-3 rounded-xl flex flex-col"
+        @submit.prevent="onSubmit"
+        class="bg-[#413b43] w-90 h-110 mt-3 rounded-xl flex flex-col justify-evenly items-center"
       >
         <FormField v-slot="{ componentField }" name="username">
-          <FormItem class="mt-5 w-8/9 ml-5">
+          <FormItem class="w-8/9">
             <FormLabel>Username</FormLabel>
             <FormControl>
               <Input
                 type="text"
-                placeholder="shadcn"
+                placeholder="Write your username..."
                 v-bind="componentField"
-                class=""
+                class="rounded-[none] shadow-md"
               />
             </FormControl>
-            <FormDescription>
-              This is your public display name.
-            </FormDescription>
             <FormMessage />
           </FormItem>
         </FormField>
-        <FormField v-slot="{ componentField }" name="username">
-          <FormItem class="mt-5 w-8/9 ml-5">
-            <FormLabel>Username</FormLabel>
+        <FormField v-slot="{ componentField }" name="email">
+          <FormItem class="w-8/9">
+            <FormLabel>E-Mail</FormLabel>
             <FormControl>
               <Input
                 type="text"
-                placeholder="shadcn"
+                placeholder="Write your email..."
                 v-bind="componentField"
-                class=""
+                class="rounded-[none] shadow-md"
               />
             </FormControl>
-            <FormDescription>
-              This is your public display name.
-            </FormDescription>
             <FormMessage />
           </FormItem>
         </FormField>
-        <FormField v-slot="{ componentField }" name="username">
-          <FormItem class="mt-5 w-8/9 ml-5">
-            <FormLabel>Username</FormLabel>
+        <FormField v-slot="{ componentField }" name="password">
+          <FormItem class="w-8/9">
+            <FormLabel>Password</FormLabel>
             <FormControl>
               <Input
                 type="text"
-                placeholder="shadcn"
+                placeholder="Write your password..."
                 v-bind="componentField"
-                class=""
+                class="rounded-[none] shadow-md aria-invalid:border-destructive"
               />
             </FormControl>
-            <FormDescription>
-              This is your public display name.
-            </FormDescription>
             <FormMessage />
           </FormItem>
         </FormField>
-        <Button type="submit"> Submit </Button>
+        <Button type="submit" class="button w-1/2 text-xl" size="lg">
+          Submit
+        </Button>
       </form>
     </div>
   </div>
