@@ -40,7 +40,7 @@ const onSubmit = form.handleSubmit((values) => {
       >
       <form
         @submit.prevent="onSubmit"
-        class="bg-[#413b43] w-90 h-110 mt-3 rounded-xl flex flex-col justify-evenly items-center"
+        class="bg-[#413b43] w-80 sm:w-90 h-110 mt-3 rounded-xl flex flex-col justify-evenly items-center"
       >
         <FormField v-slot="{ componentField }" name="username">
           <FormItem class="w-8/9">
