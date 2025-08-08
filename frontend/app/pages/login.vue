@@ -17,7 +17,7 @@ const formSchema = toTypedSchema(
   z.object({
     username: z.string().min(2).max(30),
     email: z.string().email(),
-    password: z.string().min(6),
+    password: z.string().min(8),
   })
 );
 
@@ -25,8 +25,26 @@ const form = useForm({
   validationSchema: formSchema,
 });
 
-const onSubmit = form.handleSubmit((values) => {
-  console.log("Form submitted!", values);
+const onSubmit = form.handleSubmit(async (values) => {
+  try {
+    const response = await fetch("http://localhost:8000/api/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(values),
+    });
+    const data = await response.json();
+    if (response.ok) {
+      console.log("Registration successful!", data);
+      // Можна додати редірект або повідомлення
+    } else {
+      console.error("Registration failed:", data);
+      // Можна показати помилку користувачу
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
 });
 </script>
 
