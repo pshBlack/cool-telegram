@@ -25,9 +25,24 @@ const form = useForm({
   validationSchema: formSchema,
 });
 
+const getUser = async () => {
+  try {
+    const response = await fetch("http://localhost:8000/api/auth/user", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const data = await response.json();
+    console.log(data);
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
+
 const onSubmit = form.handleSubmit(async (values) => {
   try {
-    const response = await fetch("http://localhost:8000/api/login", {
+    const response = await fetch("http://localhost:8000/api/auth/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -37,6 +52,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     const data = await response.json();
     if (response.ok) {
       toast.success("Login successful");
+      await getUser();
     } else {
       toast.error("Login failed");
       console.log(data);

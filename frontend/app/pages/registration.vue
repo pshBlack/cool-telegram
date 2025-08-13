@@ -16,7 +16,7 @@ import { toast } from "vue-sonner";
 
 const formSchema = toTypedSchema(
   z.object({
-    username: z.string().min(2).max(30),
+    name: z.string().min(2).max(30),
     email: z.string().email(),
     password: z.string().min(8),
   })
@@ -28,7 +28,7 @@ const form = useForm({
 
 const onSubmit = form.handleSubmit(async (values) => {
   try {
-    const response = await fetch("http://localhost:8000/api/register", {
+    const response = await fetch("http://localhost:8000/api/auth/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -38,6 +38,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     const data = await response.json();
     if (response.ok) {
       toast.success("Registration successful");
+      console.log(data);
     } else {
       toast.error("Registration failed");
     }
@@ -59,7 +60,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         @submit.prevent="onSubmit"
         class="bg-[#413b43] w-80 sm:w-90 h-110 mt-3 rounded-xl flex flex-col justify-evenly items-center"
       >
-        <FormField v-slot="{ componentField }" name="username">
+        <FormField v-slot="{ componentField }" name="name">
           <FormItem class="w-8/9">
             <FormLabel>Username</FormLabel>
             <FormControl>
@@ -92,7 +93,7 @@ const onSubmit = form.handleSubmit(async (values) => {
             <FormLabel>Password</FormLabel>
             <FormControl>
               <Input
-                type="text"
+                type="password"
                 placeholder="Write your password..."
                 v-bind="componentField"
                 class="rounded-[none] shadow-md aria-invalid:border-destructive"
