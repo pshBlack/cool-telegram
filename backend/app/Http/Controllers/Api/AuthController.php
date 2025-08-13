@@ -27,16 +27,18 @@ class AuthController extends Controller
             Log::info('Validation passed', $validated);
 
             $user = new users1();
+            $expirecAt = now('UTC')->addHours(3);
             $user->username = $request->username;
             $user->email = $request->email;
             $user->password = Hash::make($request->password);
             
             if ($user->save()) {
-                $token = $user->createToken('auth-token')->plainTextToken;
+                $token = $user->createToken('auth-token', expiresAt: $expirecAt)->plainTextToken;
                 Log::info('User registered successfully', ['user_id' => $user->id]);
                 return response()->json([
                     'message' => 'User registered successfully',
                     'token' => $token,
+                    'token_expires_at' => $expirecAt,
                     'user' => $user,
                 ], 201);
             } else {
@@ -66,6 +68,7 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        $expirecAt = now('UTC')->addHours(3);
         $request->validate([
             'email' => 'required|string|email',
             'password' => 'required|string',
@@ -81,7 +84,7 @@ class AuthController extends Controller
         }
 
         // Створюємо токен для користувача після успішного входу
-        $token = $user->createToken('auth-token')->plainTextToken;
+        $token = $user->createToken('auth-token', expiresAt: $expirecAt )->plainTextToken;
 
         // Повертаємо відповідь, використовуючи UserResource для форматування даних користувача
         return response()->json([
