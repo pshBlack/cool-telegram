@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
@@ -29,13 +30,16 @@ class AuthController extends Controller
             'password_hash' => Hash::make($validated['password']),
         ]);
 
-        $token = $user->createToken('api_token')->plainTextToken;
+   $token = $user->createToken('api_token')->accessToken;
+    $user->tokens()->latest()->first()->update([
+        'expires_at' => Carbon::now()->addsecond(10) // time
+    ]);
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token
-        ], 201);
-    }
+    return response()->json([
+        'user' => $user,
+        'token' => $token
+    ], 201);
+}
 
     // login
    public function login(Request $request)
@@ -57,8 +61,10 @@ class AuthController extends Controller
     // delete all previous tokens
     $user->tokens()->delete();
 
-    $token = $user->createToken('api_token')->plainTextToken;
-
+    $token = $user->createToken('api_token')->accessToken;
+    $user->tokens()->latest()->first()->update([
+        'expires_at' => Carbon::now()->addSecond(10) // time
+    ]);
     return response()->json([
         'message' => 'Login successful',
         'user' => $user->makeHidden(['password_hash']),

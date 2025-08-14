@@ -9,6 +9,12 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory;
+    
+    public function getAuthPassword()
+{
+    return $this->password_hash;
+}
+
 
     protected $primaryKey = 'user_id'; // Custom primary key
 
