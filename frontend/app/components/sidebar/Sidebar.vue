@@ -12,16 +12,16 @@
         id="search"
         type="text"
         placeholder="Search for a new friend..."
-        class="pl-4 shadow-2xl placeholder:text-lg"
+        class="pl-4 py-4 shadow-2xl placeholder:text-lg rounded-md"
         v-model="text"
       />
     </div>
 
     <ul
       v-if="filteredChats.length > 0"
-      class="flex flex-col bg-[#4a444c] mt-4 rounded-xl py-2 shadow-xl"
+      class="flex flex-col bg-[#4a444c] mt-4 rounded-md py-2 shadow-xl"
     >
-      <li v-for="chat in filteredChats" :key="chat.id" class="mb-1">
+      <li v-for="chat in filteredChats" :key="chat.id" class="">
         <NuxtLink
           :to="`/chats/${chat.id}`"
           class="flex items-center justify-between p-3 hover:bg-[#3b363e] transition"

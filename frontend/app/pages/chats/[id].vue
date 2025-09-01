@@ -3,7 +3,9 @@
     <Sidebar :chats="chats" />
 
     <!-- Права панель (поточний чат) -->
-    <main class="flex-1 flex flex-col bg-[#312c32] m-4 rounded-2xl shadow-xl">
+    <main
+      class="flex-1 flex flex-col bg-[#312c32] m-4 rounded-2xl shadow-xl p-2"
+    >
       <!-- Заголовок -->
       <header
         class="p-4 m-2 bg-[#4a444c] rounded-2xl flex justify-between items-center"
@@ -40,7 +42,7 @@
           v-model="newMessage"
           type="text"
           placeholder="Write your message..."
-          class="flex-1 rounded-lg px-3 py-5 mr-2 text-2xl placeholder:text-lg"
+          class="flex-1 rounded-md px-3 py-5 mr-2 text-2xl placeholder:text-lg"
           @keyup.enter="sendMessage"
         />
       </footer>
