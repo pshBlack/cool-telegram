@@ -2,148 +2,84 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Cookie;
-use Carbon\Carbon;
 use App\Models\User;
-use App\Models\Channel;
-use Laravolt\Avatar\Facade as Avatar;
-
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
-    /**
-     * Handle user registration
-     */
+    // register
     public function register(Request $request)
     {
-        $messages = [
-            "name.required" => "Name cannot be empty",
-            "name.max" => "Name cannot be more than 50 characters",
-            "email.required" => "Email cannot be empty",
-            "email.email" => "Email is not valid",
-            "email.unique" => "A User with that E-Mail already exists.",
-            "password.required" => "Password cannot be empty",
-            "password.min" => "Password must be at least 6 characters",
-        ];
-
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:50',
-            'email' => 'required|string|email|unique:users,email',
+        $validated = $request->validate([
+            'username' => 'required|string|max:50|unique:users',
+           // 'first_name' => 'required|string|max:100',
+            // 'last_name' => 'nullable|string|max:100',
+            'email' => 'required|email|max:255|unique:users',
             'password' => 'required|string|min:6',
-        ], $messages);
-
-        if ($validator->fails()) {
-            return response()->json(['message'=> $validator->errors()->first()], 422);
-        }
-
-        // Create user
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
         ]);
 
-        // Generate default avatar
-       /* $avatarPath = 'avatars/'.$request->name.'-default.jpg';
-        Avatar::create($request->name)->save(storage_path('app/public/'.$avatarPath), 100);
-        $user->details()->updateOrCreate(
-            ['user_id' => $user->id],
-            ['avatar' => $avatarPath]
-        );*/
 
-        // Add user to the default General Channel
-        $channel = Channel::find(1);
-        if ($channel) {
-            $channel->users()->attach($user->id);
-        }
+        $user = User::create([
+            'username' => $validated['username'],
+           // 'first_name' => $validated['first_name'],
+           // 'last_name' => $validated['last_name'] ?? null,
+            'email' => $validated['email'],
+            'password_hash' => Hash::make($validated['password']),
+        ]);
 
-        return response()->json([
-            'message' => 'You have registered successfully! Redirecting you to the login page.'
-        ], 201);
+    $token = $user->createToken('api_token')->plainTextToken;
+    // $token = $user->createToken('api_token')->accessToken; ERROR
+    $user->tokens()->latest()->first()->update([
+        'expires_at' => Carbon::now()->addseconds(100000) // time
+    ]);
+
+    return response()->json([
+        'user' => $user,
+        'token' => $token
+    ], 201);
+}
+
+    // login
+   public function login(Request $request)
+{
+    $validated = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required|string',
+    ]);
+
+    $user = User::where('email', $validated['email'])->first();
+
+    if (!$user || !Hash::check($validated['password'], $user->password_hash)) {
+        throw ValidationException::withMessages([
+            'email' => ['Invalid credentials.'],
+        ]);
     }
 
-    /**
-     * Handle user login
-     */
-    public function login(Request $request)
-    {
-        $messages = [
-            "email.required" => "Email cannot be empty",
-            "email.email" => "Email is not valid",
-            "password.required" => "Password cannot be empty",
-            "password.min" => "Password must be at least 6 characters",
-        ];
+    // one token per login
+    // delete all previous tokens
+    $user->tokens()->delete();
 
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|string|email',
-            'password' => 'required|string|min:6',
-        ], $messages);
+    $token = $user->createToken('api_token')->plainTextToken;
+    $user->tokens()->latest()->first()->update([
+        'expires_at' => Carbon::now()->addSeconds(10000) // time
+    ]);
+    return response()->json([
+        'message' => 'Login successful',
+        'user' => $user->makeHidden(['password_hash']),
+        'token' => $token
+    ]);
+}
 
-        if ($validator->fails()) {
-            return response()->json(['message'=> $validator->errors()->first()], 422);
-        }
-
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Incorrect password or the account does not exist.'], 401);
-        }
-
-        // Create token manually
-        $tokenResult = $user->createToken('Personal Access Token');
-        $token = $tokenResult->token;
-        $token->expires_at = Carbon::now()->addHours(1);
-        $token->save();
-
-        // Optional: mark user as online
-        Cache::put('user-is-online-'.$user->id, true, now()->addMinutes(5));
-
-        return response()->json([
-            'user' => $user,
-            'token' => $tokenResult->plainTextToken,
-        ], 200)->cookie('jwt', $tokenResult->plainTextToken, 60);
-    }
-
-    /**
-     * Logout user and revoke token
-     */
+    // unlogin
     public function logout(Request $request)
     {
-        $user = $request->user();
-        if ($user) {
-            $user->currentAccessToken()?->delete();
-            Cache::forget('user-is-online-'.$user->id);
-        }
+        $request->user()->tokens()->delete();
 
-        return response()->json(['message' => 'Successfully logged out'], 200)
-                         ->cookie(Cookie::forget('jwt'));
-    }
-
-    /**
-     * Get authenticated user info
-     */
-    public function user(Request $request)
-    {
-        $user = $request->user();
-        if ($user && $user->details) {
-            $user->avatar = $user->details->avatar;
-            $user->desc = $user->details->desc;
-        }
-
-        return response()->json($user);
-    }
-
-    /**
-     * Get all users list with details
-     */
-    public function allUsersList()
-    {
-        $allUsersList = User::with('details')->get();
-        return response()->json($allUsersList);
+        return response()->json([
+            'message' => 'Logged out successfully'
+        ]);
     }
 }

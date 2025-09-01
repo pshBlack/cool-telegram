@@ -13,10 +13,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "vue-sonner";
+import Cookies from "universal-cookie";
+import fetchLogin from "./login.vue";
+const cookies = new Cookies(null, { path: "/" });
 
 const formSchema = toTypedSchema(
   z.object({
-    name: z.string().min(2).max(30),
+    username: z.string().min(2).max(30),
     email: z.string().email(),
     password: z.string().min(8),
   })
@@ -28,10 +31,11 @@ const form = useForm({
 
 const onSubmit = form.handleSubmit(async (values) => {
   try {
-    const response = await fetch("http://localhost:8000/api/auth/register", {
+    const response = await fetch("http://localhost:8000/api/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify(values),
     });
@@ -39,6 +43,8 @@ const onSubmit = form.handleSubmit(async (values) => {
     if (response.ok) {
       toast.success("Registration successful");
       console.log(data);
+      localStorage.setItem("token", data.token);
+      //await navigateTo("/login");
     } else {
       toast.error("Registration failed");
     }
@@ -60,7 +66,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         @submit.prevent="onSubmit"
         class="bg-[#413b43] w-80 sm:w-90 h-110 mt-3 rounded-xl flex flex-col justify-evenly items-center"
       >
-        <FormField v-slot="{ componentField }" name="name">
+        <FormField v-slot="{ componentField }" name="username">
           <FormItem class="w-8/9">
             <FormLabel>Username</FormLabel>
             <FormControl>
