@@ -12,7 +12,7 @@
         id="search"
         type="text"
         placeholder="Search for a new friend..."
-        class="pl-4 shadow-2xl"
+        class="pl-4 shadow-2xl placeholder:text-lg"
         v-model="text"
       />
     </div>

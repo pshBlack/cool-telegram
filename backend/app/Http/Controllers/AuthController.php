@@ -30,10 +30,9 @@ class AuthController extends Controller
             'password_hash' => Hash::make($validated['password']),
         ]);
 
-    $token = $user->createToken('api_token')->plainTextToken;
-    // $token = $user->createToken('api_token')->accessToken; ERROR
+   $token = $user->createToken('api_token')->plainTextToken;
     $user->tokens()->latest()->first()->update([
-        'expires_at' => Carbon::now()->addseconds(100000) // time
+        'expires_at' => Carbon::now()->addsecondі(10000) // time
     ]);
 
     return response()->json([
