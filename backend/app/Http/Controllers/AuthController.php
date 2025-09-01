@@ -30,7 +30,7 @@ class AuthController extends Controller
             'password_hash' => Hash::make($validated['password']),
         ]);
 
-   $token = $user->createToken('api_token')->accessToken;
+   $token = $user->createToken('api_token')->plainTextToken;
     $user->tokens()->latest()->first()->update([
         'expires_at' => Carbon::now()->addsecond(10) // time
     ]);
@@ -61,7 +61,7 @@ class AuthController extends Controller
     // delete all previous tokens
     $user->tokens()->delete();
 
-    $token = $user->createToken('api_token')->accessToken;
+    $token = $user->createToken('api_token')->plainTextToken;
     $user->tokens()->latest()->first()->update([
         'expires_at' => Carbon::now()->addSecond(10) // time
     ]);
