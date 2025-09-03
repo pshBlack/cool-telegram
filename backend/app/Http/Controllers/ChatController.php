@@ -58,4 +58,21 @@ class ChatController extends Controller
             'chat' => $chat->load('users')
         ], 201);
     }
+     
+    public function getUserChats(Request $request)
+{
+    $authUser = $request->user();
+
+    $chats = $authUser->chats()
+        ->with(['users:user_id,username,email,avatar_url', 'messages' => function ($q) {
+            $q->latest('sent_at')->limit(1); // last message
+        }])
+        ->get();
+
+    return response()->json($chats);
+}
+
+
+
+
 }

@@ -15,6 +15,12 @@ class User extends Authenticatable
     return $this->password_hash;
 }
 
+public function chats()
+{
+    return $this->belongsToMany(Chat::class, 'chat_participants', 'user_id', 'chat_id')
+                ->withPivot('role', 'joined_at');
+}
+
 
     protected $primaryKey = 'user_id'; // Custom primary key
 
