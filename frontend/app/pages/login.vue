@@ -1,26 +1,27 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { toTypedSchema } from "@vee-validate/zod";
 import { useForm } from "vee-validate";
 import * as z from "zod";
 import {
   FormControl,
+  Form,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { toast } from "vue-sonner";
+import { onMounted } from "vue";
+import Cookies from "universal-cookie";
 
-const router = useRouter();
+const cookies = new Cookies(null, { path: "/" });
 
 const formSchema = toTypedSchema(
   z.object({
-    username: z.string().min(2, "Username must be at least 2 characters").max(30),
-    email: z.string().email("Invalid email"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
+    email: z.string().email(),
+    password: z.string().min(8),
   })
 );
 
@@ -28,12 +29,26 @@ const form = useForm({
   validationSchema: formSchema,
 });
 
-const loading = ref(false);
+const getUser = async (token: string) => {
+  try {
+    const response = await fetch("http://localhost:8000/api/user", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await response.json();
+    console.log(data);
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
 
 const onSubmit = form.handleSubmit(async (values) => {
-  loading.value = true;
   try {
-    const response = await fetch("http://localhost:8000/api/register", {
+    const response = await fetch("http://localhost:8000/api/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -41,69 +56,80 @@ const onSubmit = form.handleSubmit(async (values) => {
       },
       body: JSON.stringify(values),
     });
-
     const data = await response.json();
-
     if (response.ok) {
-      // Зберігаємо токен
-      localStorage.setItem("api_token", data.token);
-
-      
+      toast.success("Login successful");
+      localStorage.setItem("token", data.token);
     } else {
-      alert(data.message || "Registration error");
-      console.error("❌ Registration failed:", data);
+      toast.error("Login failed");
+      console.log(data);
     }
   } catch (error) {
-    console.error("🚨 Error:", error);
-    alert("Server error. Try again.");
-  } finally {
-    loading.value = false;
+    console.error("Error:", error);
+  }
+});
+
+onMounted(() => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    getUser(token);
   }
 });
 </script>
 
 <template>
   <div class="flex flex-col justify-center items-center h-screen">
-    <div class="bg-[#312c32] min-h-[533px] sm:min-w-[400px] min-w-[350px] rounded-2xl flex flex-col items-center">
-      <span class="text-2xl sm:text-3xl mt-5 opacity-100">Registration Form</span>
+    <div
+      class="bg-[#312c32] min-h-[533px] sm:min-w-[400px] min-w-[350px] rounded-2xl flex flex-col items-center"
+    >
+      <span class="text-2xl sm:text-3xl mt-5 opacity-100">Login Form</span>
 
       <form
         @submit.prevent="onSubmit"
-        class="bg-[#413b43] w-90 h-110 mt-3 rounded-xl flex flex-col justify-evenly items-center p-4"
+        class="bg-[#413b43] w-80 sm:w-90 h-110 mt-3 rounded-xl flex flex-col"
       >
-        <FormField v-slot="{ componentField }" name="username">
-          <FormItem class="w-8/9">
-            <FormLabel>Username</FormLabel>
-            <FormControl>
-              <Input type="text" placeholder="Write your username..." v-bind="componentField" />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        </FormField>
-
-        <FormField v-slot="{ componentField }" name="email">
-          <FormItem class="w-8/9">
-            <FormLabel>E-Mail</FormLabel>
-            <FormControl>
-              <Input type="email" placeholder="Write your email..." v-bind="componentField" />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        </FormField>
-
-        <FormField v-slot="{ componentField }" name="password">
-          <FormItem class="w-8/9">
-            <FormLabel>Password</FormLabel>
-            <FormControl>
-              <Input type="password" placeholder="Write your password..." v-bind="componentField" />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        </FormField>
-
-        <Button type="submit" class="button w-1/2 text-xl" size="lg" :disabled="loading">
-          {{ loading ? "Loading..." : "Submit" }}
-        </Button>
+        <div
+          class="flex flex-col justify-center items-center w-full gap-10 mt-10"
+        >
+          <FormField v-slot="{ componentField }" name="email">
+            <FormItem class="w-8/9">
+              <FormLabel>E-Mail</FormLabel>
+              <FormControl>
+                <Input
+                  type="text"
+                  placeholder="Write your email..."
+                  v-bind="componentField"
+                  class="rounded-[none] shadow-md"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+          <FormField v-slot="{ componentField }" name="password">
+            <FormItem class="w-8/9">
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input
+                  type="text"
+                  placeholder="Write your password..."
+                  v-bind="componentField"
+                  class="rounded-[none] shadow-md aria-invalid:border-destructive"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+        </div>
+        <div class="flex flex-col items-center gap-3 mt-7">
+          <a
+            class="cursor-pointer underline"
+            @click="navigateTo('/registration')"
+            >I want to register</a
+          >
+          <Button type="submit" class="button w-1/2 text-xl mt-10" size="lg">
+            Submit
+          </Button>
+        </div>
       </form>
     </div>
   </div>

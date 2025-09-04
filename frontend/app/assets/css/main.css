@@ -4,6 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --search-icon: url("/Icon.png");
   --bg-color: #181418;
   --font-color: #efefef;
   --background: #181418;
@@ -56,6 +57,10 @@ body {
   transform: translateY(6px);
   box-shadow: none;
 }
+
+.sidebar ul {
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

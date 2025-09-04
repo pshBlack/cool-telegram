@@ -1,7 +1,12 @@
 <template>
-  <NuxtPage />
+  <div>
+    <Toaster />
+    <NuxtPage />
+  </div>
 </template>
 <script setup lang="ts">
 import { NuxtPage } from "#components";
-import AppSidebar from "./components/ui/customUI/AppSidebar.vue";
+
+import { Toaster } from "@/components/ui/sonner";
+import "vue-sonner/style.css";
 </script>
