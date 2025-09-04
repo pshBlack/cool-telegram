@@ -7,7 +7,7 @@ use App\Http\Middleware\CheckTokenExpiration;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\UserController;
-
+use App\Http\Controllers\AllUsersChatController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -26,10 +26,14 @@ Route::middleware(['auth:sanctum', CheckTokenExpiration::class])->group(function
     Route::post('/chats', [ChatController::class, 'createChat']);
     Route::get('/chats', [ChatController::class, 'getUserChats']);
 
+    Route::post('/chats/all-users', [AllUsersChatController::class, 'create']);
+
     // messages
     Route::post('/chats/{chatId}/messages', [MessageController::class, 'sendMessage']);
     Route::get('/chats/{chatId}/messages', [MessageController::class, 'getMessages']);
     Route::post('/messages/{messageId}/read', [MessageController::class, 'markAsRead']);
 
     Route::get('/users/search', [UserController::class, 'search']);
+
+    
 });

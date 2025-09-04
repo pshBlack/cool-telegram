@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Message;
 use App\Models\Chat;
+use App\Events\MessageSent;
+use App\Events\SendMessage;
 
 
 class MessageController extends Controller
@@ -27,7 +29,7 @@ class MessageController extends Controller
             return response()->json(['message' => 'You are not in this chat'], 403);
         }
 
-        $message = Message::create([
+       /* $message = Message::create([
             'chat_id' => $chat->chat_id,
             'sender_id' => $authUser->user_id,
             'content' => $validated['content'],
@@ -38,7 +40,13 @@ class MessageController extends Controller
         return response()->json([
             'message' => 'Message sent',
             'data' => $message->load('sender')
-        ], 201);
+        ], 201);*/
+
+        event(new SendMessage($chatId, $validated['content'], $authUser));
+
+        return response()->json(['message' => 'Message sent'], 201);
+      
+
     }
 
     // history of messages in chat
@@ -46,7 +54,6 @@ class MessageController extends Controller
     {
         $authUser = $request->user();
 
-        // validate chat 
         $chat = Chat::where('chat_id', $chatId)
             ->whereHas('users', fn($q) => $q->where('user_id', $authUser->user_id))
             ->first();
@@ -73,7 +80,8 @@ class MessageController extends Controller
         if (!$message) {
             return response()->json(['message' => 'Message not found'], 404);
         }
-            // validate chat membership
+
+        // Перевірка, чи користувач учасник чату
         $chat = $message->chat;
         if (!$chat->users()->where('users.user_id', $authUser->user_id)->exists()) {
             return response()->json(['message' => 'You are not in this chat'], 403);
