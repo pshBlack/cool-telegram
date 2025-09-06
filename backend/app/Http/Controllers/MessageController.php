@@ -22,14 +22,14 @@ class MessageController extends Controller
 
         // validate chat membership
         $chat = Chat::where('chat_id', $chatId)
-            ->whereHas('users', fn($q) => $q->where('user_id', $authUser->user_id))
+            ->whereHas('users', fn($q) => $q->where('chat_participants.user_id', $authUser->user_id))
             ->first();
 
         if (!$chat) {
             return response()->json(['message' => 'You are not in this chat'], 403);
         }
 
-       /* $message = Message::create([
+        $message = Message::create([
             'chat_id' => $chat->chat_id,
             'sender_id' => $authUser->user_id,
             'content' => $validated['content'],
@@ -40,12 +40,16 @@ class MessageController extends Controller
         return response()->json([
             'message' => 'Message sent',
             'data' => $message->load('sender')
-        ], 201);*/
+        ], 201);
 
         event(new SendMessage($chatId, $validated['content'], $authUser));
 
-        return response()->json(['message' => 'Message sent'], 201);
-      
+        
+
+      return response()->json([
+            'message' => 'Message sent',
+            'data' => $message->load('sender')
+        ], 201);
 
     }
 
@@ -55,7 +59,7 @@ class MessageController extends Controller
         $authUser = $request->user();
 
         $chat = Chat::where('chat_id', $chatId)
-            ->whereHas('users', fn($q) => $q->where('user_id', $authUser->user_id))
+            ->whereHas('users', fn($q) => $q->where('chat_participants.user_id', $authUser->user_id))
             ->first();
 
         if (!$chat) {
@@ -64,7 +68,7 @@ class MessageController extends Controller
 
         $messages = Message::where('chat_id', $chat->chat_id)
             ->orderBy('sent_at', 'asc')
-            ->with('sender')
+            ->with('sender:id,user_id,username,avatar_url')
             ->get();
 
         return response()->json($messages);
@@ -81,7 +85,7 @@ class MessageController extends Controller
             return response()->json(['message' => 'Message not found'], 404);
         }
 
-        // Перевірка, чи користувач учасник чату
+        // validate chat membership
         $chat = $message->chat;
         if (!$chat->users()->where('users.user_id', $authUser->user_id)->exists()) {
             return response()->json(['message' => 'You are not in this chat'], 403);

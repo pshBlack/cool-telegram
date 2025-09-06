@@ -32,7 +32,8 @@ return new class extends Migration {
             $table->string('chat_avatar_url', 255)->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->timestamp('created_at')->useCurrent();
-
+            $table->timestamp('updated_at')->nullable();
+            
             $table->foreign('created_by')
                 ->references('user_id')->on('users')
                 ->onDelete('set null');

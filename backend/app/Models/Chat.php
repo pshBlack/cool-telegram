@@ -6,7 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Chat extends Model
 {
-    protected $fillable = ['name'];
+
+     protected $primaryKey = 'chat_id';
+            protected $keyType = 'int'; 
+
+
+   protected $fillable = [
+        'chat_type',
+        'chat_name',
+        'chat_avatar_url',
+        'created_by',
+    ];
 
    public function users()
 {
