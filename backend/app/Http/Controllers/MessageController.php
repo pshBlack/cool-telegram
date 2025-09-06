@@ -22,8 +22,8 @@ class MessageController extends Controller
 
         // validate chat membership
         $chat = Chat::where('chat_id', $chatId)
-    ->whereHas('users', fn($q) => $q->whereKey($authUser->user_id))
-    ->first();
+            ->whereHas('users', fn($q) => $q->where('chat_participants.user_id', $authUser->user_id))
+            ->first();
 
         if (!$chat) {
             return response()->json(['message' => 'You are not in this chat'], 403);
@@ -68,7 +68,7 @@ class MessageController extends Controller
 
         $messages = Message::where('chat_id', $chat->chat_id)
             ->orderBy('sent_at', 'asc')
-            ->with('sender:id,user_id,username,avatar_url')
+            ->with('sender:user_id,username,avatar_url')
             ->get();
 
         return response()->json($messages);

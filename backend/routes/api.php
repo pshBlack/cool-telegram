@@ -35,7 +35,7 @@ Route::middleware(['auth:sanctum', CheckTokenExpiration::class])->group(function
 
     //Route::get('/users/search', [UserController::class, 'search']);
     Route::get('/users/search/{username}', [UserController::class, 'search']);
-    Route::post('/users/search', [UserController::class, 'search']); //rofl ПАША не вбивай
+    //Route::post('/users/search', [UserController::class, 'search']); //rofl ПАША не вбивай
 
     
 });

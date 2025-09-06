@@ -22,7 +22,7 @@ class Chat extends Model
 {
     return $this->belongsToMany(User::class, 'chat_participants', 'chat_id', 'user_id')
                 ->withPivot('role', 'joined_at');
-}   
+}
 
 public function messages()
 {
