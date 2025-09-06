@@ -18,12 +18,12 @@
     </div>
 
     <ul
-      v-if="filteredChats.length > 0"
+      v-if="filteredChats ? filteredChats.length > 0 : false"
       class="flex flex-col bg-[#4a444c] mt-4 rounded-md py-2 shadow-xl"
     >
-      <li v-for="chat in filteredChats" :key="chat.id" class="">
+      <li v-for="chat in filteredChats" :key="chat.chat_id" class="">
         <NuxtLink
-          :to="`/chats/${chat.id}`"
+          :to="`/chats/${chat.chat_id}`"
           class="flex items-center justify-between p-3 hover:bg-[#3b363e] transition"
         >
           <div class="flex items-center space-x-3">
@@ -31,11 +31,9 @@
 
             <div class="flex flex-col">
               <span class="text-white font-semibold">
-                {{ chat.name }}
+                {{ chat.users[0].username }}
               </span>
-              <span class="text-gray-400 text-sm truncate w-32">
-                {{ chat.lastMessage }}
-              </span>
+              <span class="text-gray-400 text-sm truncate w-32"> </span>
             </div>
           </div>
 
@@ -48,20 +46,72 @@
         </NuxtLink>
       </li>
     </ul>
+    <ul
+      v-else-if="users.length > 0"
+      class="flex flex-col bg-[#4a444c] mt-4 rounded-md py-2 shadow-xl"
+    >
+      <li v-for="user in users" :key="user.user_id" class="">
+        <NuxtLink
+          class="flex items-center justify-between p-3 hover:bg-[#3b363e] transition"
+        >
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-full bg-[#3a1016]"></div>
+
+            <div class="flex flex-col">
+              <span class="text-white font-semibold">
+                {{ user.username }}
+              </span>
+              <span class="text-gray-400 text-sm truncate w-32"> </span>
+            </div>
+          </div>
+        </NuxtLink>
+      </li>
+    </ul>
   </aside>
 </template>
 <script lang="ts" setup>
-const { chats } = defineProps<{
-  chats: any[];
-}>();
+import { Search } from "lucide-vue-next";
+import axios from "axios";
+import { useDebounceFn } from "@vueuse/core";
+import Button from "../ui/button/Button.vue";
+import { useChatsStore } from "~/stores/chatsStore";
+import { setActivePinia } from "pinia";
+import { createPinia } from "pinia";
 
+setActivePinia(createPinia());
+const users = ref<any[]>([]);
 const text = ref("");
+const findUser = useDebounceFn(async (newValue) => {
+  if (text.value.length == 0) {
+    users.value = [];
+    return;
+  }
 
-const filteredChats = computed(() => {
-  return chats.filter((chat) =>
-    chat.name.toLowerCase().includes(text.value.toLowerCase())
+  const { data } = await axios.get(
+    `http://localhost:8000/api/users/search/${newValue}`,
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    }
   );
+  users.value = data;
+}, 300);
+const chatStore = useChatsStore();
+
+watch(text, async (newValue) => {
+  findUser(newValue);
+  users.value = [];
+});
+onMounted(async () => {
+  await chatStore.fetchChats();
 });
 
-import { Search } from "lucide-vue-next";
+const filteredChats = computed(() =>
+  chatStore.chats.filter((chat) => {
+    return chat.users[0].username
+      .toLowerCase()
+      .includes(text.value.toLowerCase());
+  })
+);
 </script>

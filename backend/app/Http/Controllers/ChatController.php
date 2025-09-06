@@ -30,8 +30,8 @@ class ChatController extends Controller
 
         // check if chat already exists
         $existingChat = Chat::where('chat_type', 'one_to_one')
-            ->whereHas('users', fn($q) => $q->where('user_id', $authUser->user_id))
-            ->whereHas('users', fn($q) => $q->where('user_id', $otherUser->user_id))
+            ->whereHas('users', fn($q) => $q->where('chat_participants.user_id', $authUser->user_id))
+            ->whereHas('users', fn($q) => $q->where('chat_participants.user_id', $otherUser->user_id))
             ->first();
 
         if ($existingChat) {
