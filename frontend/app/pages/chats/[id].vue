@@ -1,6 +1,6 @@
 <template>
   <div class="flex h-screen">
-    <Sidebar :chats="chats" />
+    <Sidebar />
 
     <!-- Права панель (поточний чат) -->
     <main
@@ -23,8 +23,8 @@
       <!-- Повідомлення -->
       <div ref="messagesContainer" class="flex-1 p-4 overflow-y-auto space-y-2">
         <div
-          v-for="(msg, i) in messages"
-          :key="i"
+          v-for="msg in messages"
+          :key="msg.message_id"
           class="p-4 rounded-lg max-w-xs"
           :class="
             msg.me
@@ -32,7 +32,7 @@
               : 'bg-[#4a444d] text-[#EDEDEC]'
           "
         >
-          {{ msg.text }}
+          {{ msg.content }}
         </div>
       </div>
 
@@ -52,102 +52,15 @@
 
 <script setup>
 import { UserPlus, Phone, Settings } from "lucide-vue-next";
+import { useChatsStore } from "@/stores/chatsStore";
+import { setActivePinia, createPinia } from "pinia";
+
+setActivePinia(createPinia());
 const route = useRoute();
-
-let chats = [
-  {
-    id: 1,
-    name: "Cool Jobless",
-    lastMessage: "Please let me work...",
-    unread: 1,
-  },
-  {
-    id: 2,
-    name: "ool Jobless",
-    lastMessage: "Please let me work...",
-    unread: 0,
-  },
-  {
-    id: 3,
-    name: "l Jobless",
-    lastMessage: "Please let me work...",
-    unread: 3,
-  },
-  {
-    id: 4,
-    name: "aool Jobless",
-    lastMessage: "Please let me work...",
-    unread: 0,
-  },
-  {
-    id: 4,
-    name: "Cool Jobless",
-    lastMessage: "Please let me work...",
-    unread: 0,
-  },
-  {
-    id: 4,
-    name: "bool Jobless",
-    lastMessage: "Please let me work...",
-    unread: 0,
-  },
-  {
-    id: 4,
-    name: "Cool Jobless",
-    lastMessage: "Please let me work...",
-    unread: 0,
-  },
-  {
-    id: 4,
-    name: "Cool Jobless",
-    lastMessage: "Please let me work...",
-    unread: 0,
-  },
-  {
-    id: 4,
-    name: "Cool Jobless",
-    lastMessage: "Please let me work...",
-    unread: 0,
-  },
-  {
-    id: 4,
-    name: "Cool Jobless",
-    lastMessage: "Please let me work...",
-    unread: 0,
-  },
-  {
-    id: 4,
-    name: "Cool Jobless",
-    lastMessage: "Please let me work...",
-    unread: 0,
-  },
-  {
-    id: 4,
-    name: "Cool Jobless",
-    lastMessage: "Please let me work...",
-    unread: 0,
-  },
-  {
-    id: 4,
-    name: "Cool Jobless",
-    lastMessage: "Please let me work...",
-    unread: 0,
-  },
-  {
-    id: 4,
-    name: "Cool Jobless",
-    lastMessage: "Please let me work...",
-    unread: 0,
-  },
-];
-
-const currentChat = chats.find((c) => c.id == route.params.id);
-
-const messages = ref([
-  { text: "Привіт 👋", me: false },
-  { text: "Як справи?", me: false },
-  { text: "Все добре, працюю над Nuxt 🚀", me: true },
-]);
+const chatsStore = useChatsStore();
+const chatId = computed(() => route.params.id); // айді з URL
+const currentChat = ref(null);
+const messages = computed(() => chatsStore.chatMessages[chatId.value] || []);
 
 const newMessage = ref("");
 
@@ -160,15 +73,19 @@ function scrollToBottom() {
     }
   });
 }
+const sendMessage = async () => {
+  if (!newMessage.value) return;
+  console.log(
+    await chatsStore.sendMessageToChat(chatId.value, newMessage.value)
+  );
 
-function sendMessage() {
-  if (newMessage.value.trim() === "") return;
-  messages.value.push({ text: newMessage.value, me: true });
   newMessage.value = "";
   scrollToBottom();
-}
+};
 
-onMounted(() => {
+onMounted(async () => {
+  currentChat.value = chatId.value;
   scrollToBottom();
+  await chatsStore.getMessageFromChat(chatId.value);
 });
 </script>

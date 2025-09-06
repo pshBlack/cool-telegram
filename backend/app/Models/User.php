@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
+
 
 class User extends Authenticatable
 {
@@ -13,6 +15,12 @@ class User extends Authenticatable
     public function getAuthPassword()
 {
     return $this->password_hash;
+}
+
+public function chats()
+{
+    return $this->belongsToMany(Chat::class, 'chat_participants', 'user_id', 'chat_id')
+                ->withPivot('role', 'joined_at');
 }
 
 

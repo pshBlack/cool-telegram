@@ -6,24 +6,36 @@ use App\Http\Controllers\AuthController;
 use App\Http\Middleware\CheckTokenExpiration;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\AllUsersChatController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware(['auth:sanctum', CheckTokenExpiration::class])->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
 
+Route::middleware(['auth:sanctum', CheckTokenExpiration::class])->group(function () {
+    // auth
+    Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', function (Request $request) {
         return response()->json([
             'user' => $request->user()->makeHidden(['password_hash'])
         ]);
     });
+
+    // chats
+    Route::post('/chats', [ChatController::class, 'createChat']);
+    Route::get('/chats', [ChatController::class, 'getUserChats']);
+
+    Route::post('/chats/all-users', [AllUsersChatController::class, 'create']);
+
+    // messages
+    Route::post('/chats/{chatId}/messages', [MessageController::class, 'sendMessage']);
+    Route::get('/chats/{chatId}/messages', [MessageController::class, 'getMessages']);
+    Route::post('/messages/{messageId}/read', [MessageController::class, 'markAsRead']);
+
+    //Route::get('/users/search', [UserController::class, 'search']);
+    Route::get('/users/search/{username}', [UserController::class, 'search']);
+    Route::post('/users/search', [UserController::class, 'search']); //rofl ПАША не вбивай
+
+    
 });
-
-Route::middleware('auth:api')->post('/chats', [ChatController::class, 'createChat']);
-
-Route::post('/chats', [ChatController::class, 'createChat']);
-
-Route::post('/chats/{chatId}/messages', [MessageController::class, 'sendMessage']);
-Route::get('/chats/{chatId}/messages', [MessageController::class, 'getMessages']);
-Route::post('/messages/{messageId}/read', [MessageController::class, 'markAsRead']);

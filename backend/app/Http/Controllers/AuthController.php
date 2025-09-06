@@ -32,7 +32,7 @@ class AuthController extends Controller
 
    $token = $user->createToken('api_token')->plainTextToken;
     $user->tokens()->latest()->first()->update([
-        'expires_at' => Carbon::now()->addsecondі(10000) // time
+        'expires_at' => Carbon::now()->addSeconds(100000) // time
     ]);
 
     return response()->json([
@@ -63,7 +63,7 @@ class AuthController extends Controller
 
     $token = $user->createToken('api_token')->plainTextToken;
     $user->tokens()->latest()->first()->update([
-        'expires_at' => Carbon::now()->addSeconds(10000) // time
+        'expires_at' => Carbon::now()->addSeconds(100000) // time
     ]);
     return response()->json([
         'message' => 'Login successful',
