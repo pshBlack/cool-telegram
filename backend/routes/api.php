@@ -33,7 +33,9 @@ Route::middleware(['auth:sanctum', CheckTokenExpiration::class])->group(function
     Route::get('/chats/{chatId}/messages', [MessageController::class, 'getMessages']);
     Route::post('/messages/{messageId}/read', [MessageController::class, 'markAsRead']);
 
-    Route::get('/users/search', [UserController::class, 'search']);
+    //Route::get('/users/search', [UserController::class, 'search']);
+    Route::get('/users/search/{username}', [UserController::class, 'search']);
+    Route::post('/users/search', [UserController::class, 'search']);
 
     
 });
