@@ -13,10 +13,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "vue-sonner";
-import { onMounted } from "vue";
-import Cookies from "universal-cookie";
+import { useUserStore } from "~/stores/userStore";
 
-const cookies = new Cookies(null, { path: "/" });
+const userStore = useUserStore();
 
 const formSchema = toTypedSchema(
   z.object({
@@ -28,25 +27,6 @@ const formSchema = toTypedSchema(
 const form = useForm({
   validationSchema: formSchema,
 });
-
-const getUser = async (token: string) => {
-  try {
-    const response = await fetch("http://localhost:8000/api/user", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const data = await response.json();
-    if (response.ok) {
-      navigateTo("/chats");
-    }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-};
 
 const onSubmit = form.handleSubmit(async (values) => {
   try {
@@ -62,19 +42,14 @@ const onSubmit = form.handleSubmit(async (values) => {
     if (response.ok) {
       toast.success("Login successful");
       localStorage.setItem("token", data.token);
+      localStorage.setItem("user", data.user.username);
+      console.log(data);
       await navigateTo("/chats");
     } else {
       toast.error("Login failed");
     }
   } catch (error) {
     console.error("Error:", error);
-  }
-});
-
-onMounted(() => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    getUser(token);
   }
 });
 </script>

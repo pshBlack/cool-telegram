@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import axios from "axios";
 import { ref } from "vue";
-import type { NuxtBuilder } from "nuxt/schema";
 
 export const useChatsStore = defineStore("chats", () => {
   const chats = ref<any[]>([]);
@@ -23,7 +22,7 @@ export const useChatsStore = defineStore("chats", () => {
       { identifier },
       { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
     );
-    // після створення нового чату оновлюємо список
+    await navigateTo(`/chats/${data.chat.chat_id}`);
     await fetchChats();
     return data;
   };

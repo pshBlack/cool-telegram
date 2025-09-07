@@ -15,12 +15,12 @@ configureEcho({
   authEndpoint: "http://localhost:8088/broadcasting/auth",
   auth: {
     headers: {
-      Authorization: `Bearer 3|EuZrmsI9cS1C4FMEjzgzFTLRUYvbFgbHESuTFOPE8cb39695`,
+      Authorization: `Bearer 27|k7attyFhfw1TEwwOACWqQf4JLY0SMGhjuyBMtW0v013c789e`,
     },
   },
 });
 
-useEcho("chats.1", "MessageSent", (e) => {
+useEcho("chats.20", "MessageSent", (e) => {
   console.log(e);
 });
 </script>

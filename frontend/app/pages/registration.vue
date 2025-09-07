@@ -13,9 +13,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "vue-sonner";
-import Cookies from "universal-cookie";
-import fetchLogin from "./login.vue";
-const cookies = new Cookies(null, { path: "/" });
 
 const formSchema = toTypedSchema(
   z.object({
