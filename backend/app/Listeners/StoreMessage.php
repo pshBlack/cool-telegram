@@ -24,12 +24,12 @@ class StoreMessage
     }
     public function handle(SendMessage $event)
     {
-       /* $message = Message::create([
+        $message = Message::create([
             'chat_id'   => $event->chatId,
             'sender_id' => $event->user->user_id,
             'content'   => $event->content,
         ]);
 
-        broadcast(new MessageSent($message))->toOthers(); */
+        broadcast(new MessageSent($message))->toOthers(); 
     }
 }
