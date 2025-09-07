@@ -88,4 +88,28 @@ onMounted(async () => {
   scrollToBottom();
   await chatsStore.getMessageFromChat(chatId.value);
 });
+import { useEcho } from "@laravel/echo-vue";
+import { configureEcho } from "@laravel/echo-vue";
+
+configureEcho({
+  broadcaster: "reverb",
+  key: import.meta.env.VITE_REVERB_APP_KEY,
+  cluster: "mt1",
+  wsHost: import.meta.env.VITE_REVERB_HOST,
+  wsPort: Number(import.meta.env.VITE_REVERB_PORT),
+  wssPort: Number(import.meta.env.VITE_REVERB_PORT),
+  forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? "https") === "https",
+  encrypted: true,
+  enabledTransports: ["ws", "wss"],
+  authEndpoint: "http://localhost:8000/broadcasting/auth",
+  auth: {
+    headers: {
+      Authorization: `Bearer 28|QYPwxNCO3CpFyCbfAbKb19gkfrsTWc9UEVVyr67l6a7f53f1`,
+    },
+  },
+});
+
+useEcho(`chat.${chatId.value}`, "MessageSent", (e) => {
+  console.log(e);
+});
 </script>
