@@ -12,7 +12,7 @@ configureEcho({
   wssPort: Number(import.meta.env.VITE_REVERB_PORT),
   forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? "https") === "https",
   enabledTransports: ["ws", "wss"],
-  authEndpoint: "http://localhost:8088/broadcasting/auth",
+  authEndpoint: "http://localhost:8000/broadcasting/auth",
   auth: {
     headers: {
       Authorization: `Bearer 27|k7attyFhfw1TEwwOACWqQf4JLY0SMGhjuyBMtW0v013c789e`,
@@ -20,7 +20,7 @@ configureEcho({
   },
 });
 
-useEcho("chats.20", "MessageSent", (e) => {
+useEcho("chat.20", "MessageSent", (e) => {
   console.log(e);
 });
 </script>
