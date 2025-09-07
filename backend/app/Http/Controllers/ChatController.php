@@ -49,7 +49,7 @@ class ChatController extends Controller
 
         // add participants
         $chat->users()->attach([
-            $authUser->user_id => ['role' => 'owner', 'joined_at' => now()],
+            $authUser->user_id => ['role' => 'member', 'joined_at' => now()],
             $otherUser->user_id => ['role' => 'member', 'joined_at' => now()],
         ]);
 
@@ -58,9 +58,35 @@ class ChatController extends Controller
             'chat' => $chat->load('users')
         ], 201);
     }
+    // delete chat
+     public function deleteChat(Request $request, $chatId)
+    {
+        $authUser = $request->user();
+        $chat = Chat::with('users', 'messages')->find($chatId);
+        if (!$chat) {
+            return response()->json(['message' => 'Chat not found'], 404);
+        }
+         if ($chat->chat_type === 'one_to_one') {
+          if (!$chat->users->contains($authUser->user_id)) {
+            return response()->json(['message' => 'You are not part of this chat'], 403);
+        }
+    } elseif ($chat->chat_type === 'group') {
+        $participant = $chat->users()->where('user_id', $authUser->user_id)->first();
+        if (!$participant || $participant->pivot->role !== 'owner') {
+            return response()->json(['message' => 'Only the owner can delete this group chat'], 403);
+        }
+    }
+       $chat->messages()->delete();
+        $chat->users()->detach();
+        $chat->delete();
+
+        return response()->json(['message' => 'Chat deleted successfully']);
+    }
+
+
      
     public function getUserChats(Request $request)
-{
+   {
     $authUser = $request->user();
 
     $chats = $authUser->chats()
@@ -70,7 +96,7 @@ class ChatController extends Controller
         ->get();
 
     return response()->json($chats);
-}
+   }
 
 
 

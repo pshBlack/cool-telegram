@@ -74,6 +74,29 @@ class MessageController extends Controller
         return response()->json($messages);
     }
 
+    // delete message
+    public function deleteMessage(Request $request, $messageId)
+    {
+        $authUser = $request->user();
+
+        $message = Message::find($messageId);
+
+       if (!$message) {
+        return response()->json(['message' => 'Message not found'], 404);
+    }
+
+    // validate sender message
+    if ($message->sender_id !== $authUser->user_id) {
+        return response()->json(['message' => 'You can only delete your own messages'], 403);
+    }
+
+    $message->delete();
+
+    return response()->json(['message' => 'Message deleted']);
+
+    }
+
+
     // mark message as read
     public function markAsRead(Request $request, $messageId)
     {
