@@ -37,20 +37,12 @@ class MessageController extends Controller
             'is_read' => false,
         ]);
 
+       event(new MessageSent($message));
+ 
         return response()->json([
             'message' => 'Message sent',
             'data' => $message->load('sender')
         ], 201);
-
-        event(new SendMessage($chatId, $validated['content'], $authUser));
-
-        
-
-      return response()->json([
-            'message' => 'Message sent',
-            'data' => $message->load('sender')
-        ], 201);
-
     }
 
     // history of messages in chat
@@ -65,12 +57,13 @@ class MessageController extends Controller
         if (!$chat) {
             return response()->json(['message' => 'You are not in this chat'], 403);
         }
+          
 
         $messages = Message::where('chat_id', $chat->chat_id)
             ->orderBy('sent_at', 'asc')
-            ->with('sender:id,user_id,username,avatar_url')
+            ->with('sender:user_id,username,avatar_url')
             ->get();
-
+        
         return response()->json($messages);
     }
 
