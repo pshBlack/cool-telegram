@@ -42,9 +42,9 @@ const onSubmit = form.handleSubmit(async (values) => {
     const data = await response.json();
     if (response.ok) {
       toast.success("Registration successful");
-      console.log(data);
+
       localStorage.setItem("token", data.token);
-      //await navigateTo("/login");
+      await navigateTo("/chats");
     } else {
       toast.error("Registration failed");
     }

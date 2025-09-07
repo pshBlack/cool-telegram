@@ -40,7 +40,9 @@ const getUser = async (token: string) => {
       },
     });
     const data = await response.json();
-    console.log(data);
+    if (response.ok) {
+      navigateTo("/chats");
+    }
   } catch (error) {
     console.error("Error:", error);
   }
@@ -60,9 +62,9 @@ const onSubmit = form.handleSubmit(async (values) => {
     if (response.ok) {
       toast.success("Login successful");
       localStorage.setItem("token", data.token);
+      await navigateTo("/chats");
     } else {
       toast.error("Login failed");
-      console.log(data);
     }
   } catch (error) {
     console.error("Error:", error);
