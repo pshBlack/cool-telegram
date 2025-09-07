@@ -28,12 +28,20 @@ Route::middleware(['auth:sanctum', CheckTokenExpiration::class])->group(function
     Route::post('/chats', [ChatController::class, 'createChat']);
     Route::get('/chats', [ChatController::class, 'getUserChats']);
     Route::post('/group-chats', [GroupChatController::class, 'createGroupChat']);
+    Route::get('/group-chats/{chatId}/messages', [GroupChatController::class, 'getGroupChatMessages']);
+
+
     Route::post('/chats/all-users', [AllUsersChatController::class, 'create']);
+     
+    Route::delete('/chats/{chatId}', [ChatController::class, 'deleteChat']);
+    Route::delete('/group-chats/{chatId}', [GroupChatController::class, 'deleteGroupChat']);
+
 
     // messages
     Route::post('/chats/{chatId}/messages', [MessageController::class, 'sendMessage']);
     Route::get('/chats/{chatId}/messages', [MessageController::class, 'getMessages']);
     Route::post('/messages/{messageId}/read', [MessageController::class, 'markAsRead']);
+
     Route::delete('/messages/{messageId}', [MessageController::class, 'deleteMessage']);
 
 

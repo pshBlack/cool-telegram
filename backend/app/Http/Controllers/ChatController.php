@@ -63,20 +63,16 @@ class ChatController extends Controller
     {
         $authUser = $request->user();
         $chat = Chat::with('users', 'messages')->find($chatId);
-        if (!$chat) {
+        
+       if (!$chat || $chat->chat_type !== 'one_to_one') {
             return response()->json(['message' => 'Chat not found'], 404);
         }
-         if ($chat->chat_type === 'one_to_one') {
-          if (!$chat->users->contains($authUser->user_id)) {
+
+        if (!$chat->users->contains($authUser->user_id)) {
             return response()->json(['message' => 'You are not part of this chat'], 403);
         }
-    } elseif ($chat->chat_type === 'group') {
-        $participant = $chat->users()->where('user_id', $authUser->user_id)->first();
-        if (!$participant || $participant->pivot->role !== 'owner') {
-            return response()->json(['message' => 'Only the owner can delete this group chat'], 403);
-        }
-    }
-       $chat->messages()->delete();
+
+        $chat->messages()->delete();
         $chat->users()->detach();
         $chat->delete();
 
