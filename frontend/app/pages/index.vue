@@ -2,37 +2,28 @@
 import { Button } from "@/components/ui/button";
 import { useEcho } from "@laravel/echo-vue";
 import { configureEcho } from "@laravel/echo-vue";
-import { navigateTo } from '#app';
 
 configureEcho({
   broadcaster: "reverb",
-  appId: 663070,
-  key: "vdh8pyexp2aph77b7bkh",
-  wsHost: "localhost",
-  wsPort: 8088,
-  wssPort: 8088,
-  forceTLS: false,
+  key: import.meta.env.VITE_REVERB_APP_KEY,
+  cluster: "mt1",
+  wsHost: import.meta.env.VITE_REVERB_HOST,
+  wsPort: Number(import.meta.env.VITE_REVERB_PORT),
+  wssPort: Number(import.meta.env.VITE_REVERB_PORT),
+  forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? "https") === "https",
+  encrypted: true,
   enabledTransports: ["ws", "wss"],
   authEndpoint: "http://localhost:8000/broadcasting/auth",
   auth: {
     headers: {
-      Authorization: `Bearer 6|ZVXIUxVyt0b8lVVx7VyXLw3RQ8tFaJLZfcglUXpdccdeca91`,
+      Authorization: `Bearer 27|k7attyFhfw1TEwwOACWqQf4JLY0SMGhjuyBMtW0v013c789e`,
     },
   },
 });
 
-const echo = useEcho();
-
-// Слухаємо приватний канал через Reverb
-echo.private("chats.1")
-  .listen("MessageSent", (e) => {
-    console.log("Новий меседж:", e);
-  });
-
-  const goToLogin = async () => {
-  await navigateTo('/login');
-};  
-
+useEcho("chat.20", "MessageSent", (e) => {
+  console.log(e);
+});
 </script>
 
 <template>

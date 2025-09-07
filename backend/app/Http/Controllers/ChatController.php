@@ -58,8 +58,8 @@ class ChatController extends Controller
             'chat' => $chat->load('users')
         ], 201);
     }
-    // delete chat
-     public function deleteChat(Request $request, $chatId)
+        // delete chat
+    public function deleteChat(Request $request, $chatId)
     {
         $authUser = $request->user();
         $chat = Chat::with('users', 'messages')->find($chatId);
@@ -79,10 +79,9 @@ class ChatController extends Controller
         return response()->json(['message' => 'Chat deleted successfully']);
     }
 
-
      
     public function getUserChats(Request $request)
-   {
+{
     $authUser = $request->user();
 
     $chats = $authUser->chats()
@@ -92,7 +91,7 @@ class ChatController extends Controller
         ->get();
 
     return response()->json($chats);
-   }
+}
 
 
 

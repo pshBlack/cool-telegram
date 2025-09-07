@@ -8,4 +8,16 @@
   </div>
 </template>
 
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+import { useUserStore } from "~/stores/userStore";
+const userStore = useUserStore();
+
+onMounted(async () => {
+  const token = localStorage.getItem("token");
+  await userStore.fetchUser(token as string);
+});
+
+definePageMeta({
+  middleware: (to, from) => {},
+});
+</script>

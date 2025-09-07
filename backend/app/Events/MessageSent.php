@@ -7,7 +7,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Message;
-use App\Models\Chat; 
+use App\Models\Chat;
 
 
 
@@ -31,7 +31,7 @@ class MessageSent implements ShouldBroadcast
     {
         return 'message.sent';
     }
-    public function broadcastWith()
+     public function broadcastWith()
     {
         return [
             'message_id'=> $this->message->message_id,

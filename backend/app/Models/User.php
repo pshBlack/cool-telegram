@@ -11,8 +11,8 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory;
-    protected $primaryKey = 'user_id'; // Custom primary key
     
+    protected $primaryKey = 'user_id'; // Custom primary key
     public function getAuthPassword()
 {
     return $this->password_hash;
@@ -24,7 +24,7 @@ public function chats()
                 ->withPivot('role', 'joined_at');
 }
 
-
+ 
 
     protected $fillable = [
         'username',

@@ -11,7 +11,9 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 Broadcast::channel('chat.{chatId}', function ($user, $chatId) {
-    return \App\Models\Chat::where('chat_id', $chatId)
+    return Chat::where('chat_id', $chatId)
         ->whereHas('users', fn($q) => $q->where('chat_participants.user_id', $user->user_id))
         ->exists();
+        
 });
+Broadcast::routes(['middleware' => ['auth:sanctum']]); // auth:api → для Bearer токена

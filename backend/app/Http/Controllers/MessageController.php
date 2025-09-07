@@ -36,37 +36,17 @@ class MessageController extends Controller
             'sent_at' => now(),
             'is_read' => false,
         ]);
+        
+         //event(new MessageSent($chatId, $validated['content'], $authUser));
 
-       event(new MessageSent($message));
- 
+         event(new MessageSent($message));
+
         return response()->json([
             'message' => 'Message sent',
             'data' => $message->load('sender')
         ], 201);
+
     }
-
-    // history of messages in chat
-    public function getMessages(Request $request, $chatId)
-    {
-        $authUser = $request->user();
-
-        $chat = Chat::where('chat_id', $chatId)
-            ->whereHas('users', fn($q) => $q->where('chat_participants.user_id', $authUser->user_id))
-            ->first();
-
-        if (!$chat) {
-            return response()->json(['message' => 'You are not in this chat'], 403);
-        }
-          
-
-        $messages = Message::where('chat_id', $chat->chat_id)
-            ->orderBy('sent_at', 'asc')
-            ->with('sender:user_id,username,avatar_url')
-            ->get();
-        
-        return response()->json($messages);
-    }
-
     // delete message
     public function deleteMessage(Request $request, $messageId)
     {
@@ -88,7 +68,27 @@ class MessageController extends Controller
     return response()->json(['message' => 'Message deleted']);
 
     }
+ 
+    // history of messages in chat
+    public function getMessages(Request $request, $chatId)
+    {
+        $authUser = $request->user();
 
+        $chat = Chat::where('chat_id', $chatId)
+            ->whereHas('users', fn($q) => $q->where('chat_participants.user_id', $authUser->user_id))
+            ->first();
+
+        if (!$chat) {
+            return response()->json(['message' => 'You are not in this chat'], 403);
+        }
+
+        $messages = Message::where('chat_id', $chat->chat_id)
+            ->orderBy('sent_at', 'asc')
+            ->with('sender:user_id,username,avatar_url')
+            ->get();
+
+        return response()->json($messages);
+    }
 
     // mark message as read
     public function markAsRead(Request $request, $messageId)

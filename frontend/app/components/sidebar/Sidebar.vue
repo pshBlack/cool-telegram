@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="w-1/4 p-4 bg-[#312c32] overflow-y-auto rounded-2xl my-4 ml-4 shadow-xl"
+    class="w-1/4 p-4 bg-[#312c32] overflow-y-auto rounded-2xl my-4 ml-4 shadow-xl flex flex-col"
   >
     <div class="relative w-full max-w-sm items-center">
       <span
@@ -31,7 +31,7 @@
 
             <div class="flex flex-col">
               <span class="text-white font-semibold">
-                {{ chat.users[0].username }}
+                {{ chat.otherUser.username }}
               </span>
               <span class="text-gray-400 text-sm truncate w-32"> </span>
             </div>
@@ -50,7 +50,17 @@
       v-else-if="users.length > 0"
       class="flex flex-col bg-[#4a444c] mt-4 rounded-md py-2 shadow-xl"
     >
-      <li v-for="user in users" :key="user.user_id" class="">
+      <li
+        v-for="user in users"
+        :key="user.user_id"
+        class=""
+        @click="
+          () => {
+            chatStore.createChat(user.username);
+            text = '';
+          }
+        "
+      >
         <NuxtLink
           class="flex items-center justify-between p-3 hover:bg-[#3b363e] transition"
         >
@@ -67,20 +77,32 @@
         </NuxtLink>
       </li>
     </ul>
+
+    <Button
+      type="submit"
+      class="button w-1/2 text-xl mt-auto flex justify-center self-center"
+      size="lg"
+      @click="logout"
+      >Logout >
+    </Button>
   </aside>
 </template>
 <script lang="ts" setup>
+import { LogOut } from "lucide-vue-next";
 import { Search } from "lucide-vue-next";
 import axios from "axios";
 import { useDebounceFn } from "@vueuse/core";
 import Button from "../ui/button/Button.vue";
 import { useChatsStore } from "~/stores/chatsStore";
-import { setActivePinia } from "pinia";
-import { createPinia } from "pinia";
-
-setActivePinia(createPinia());
 const users = ref<any[]>([]);
 const text = ref("");
+
+const logout = async () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  await navigateTo("/login");
+};
+
 const findUser = useDebounceFn(async (newValue) => {
   if (text.value.length == 0) {
     users.value = [];
@@ -108,10 +130,19 @@ onMounted(async () => {
 });
 
 const filteredChats = computed(() =>
-  chatStore.chats.filter((chat) => {
-    return chat.users[0].username
-      .toLowerCase()
-      .includes(text.value.toLowerCase());
-  })
+  chatStore.chats
+    .map((chat) => {
+      // знаходимо іншого користувача
+      const otherUser = chat.users.find(
+        (u: any) => u.username !== localStorage.getItem("user")
+      );
+      return {
+        ...chat,
+        otherUser, // додаємо іншого користувача в об’єкт чату
+      };
+    })
+    .filter((chat) =>
+      chat.otherUser.username.toLowerCase().includes(text.value.toLowerCase())
+    )
 );
 </script>
