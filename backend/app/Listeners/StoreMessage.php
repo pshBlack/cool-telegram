@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use App\Events\SendMessage;
 use App\Models\Message;
-use app\Models\User;
+use App\Models\User;
 
 
 class StoreMessage
