@@ -11,6 +11,7 @@ configureEcho({
   wsPort: Number(import.meta.env.VITE_REVERB_PORT),
   wssPort: Number(import.meta.env.VITE_REVERB_PORT),
   forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? "https") === "https",
+  encrypted: true,
   enabledTransports: ["ws", "wss"],
   authEndpoint: "http://localhost:8000/broadcasting/auth",
   auth: {
