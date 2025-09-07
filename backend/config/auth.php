@@ -36,8 +36,8 @@ return [
     */
 
     'guards' => [
-        'web' => [
-            'driver' => 'session',
+        'api' => [
+            'driver' => 'token',
             'provider' => 'users',
         ],
     ],
@@ -59,13 +59,11 @@ return [
     |
     */
 
-
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\users1::class,
+            'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
-
 
         // 'users' => [
         //     'driver' => 'database',

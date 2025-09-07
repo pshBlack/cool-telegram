@@ -12,10 +12,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { toast } from "vue-sonner";
+import { useUserStore } from "~/stores/userStore";
+
+const userStore = useUserStore();
 
 const formSchema = toTypedSchema(
   z.object({
-    username: z.string().min(2).max(30),
     email: z.string().email(),
     password: z.string().min(8),
   })
@@ -27,20 +30,23 @@ const form = useForm({
 
 const onSubmit = form.handleSubmit(async (values) => {
   try {
-    const response = await fetch("http://localhost:8000/api/register", {
+    const response = await fetch("http://localhost:8000/api/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify(values),
     });
     const data = await response.json();
     if (response.ok) {
-      console.log("Registration successful!", data);
-      // Можна додати редірект або повідомлення
+      toast.success("Login successful");
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", data.user.username);
+      console.log(data);
+      await navigateTo("/chats");
     } else {
-      console.error("Registration failed:", data);
-      // Можна показати помилку користувачу
+      toast.error("Login failed");
     }
   } catch (error) {
     console.error("Error:", error);
@@ -53,58 +59,54 @@ const onSubmit = form.handleSubmit(async (values) => {
     <div
       class="bg-[#312c32] min-h-[533px] sm:min-w-[400px] min-w-[350px] rounded-2xl flex flex-col items-center"
     >
-      <span class="text-2xl sm:text-3xl mt-5 opacity-100"
-        >Registration Form</span
-      >
+      <span class="text-2xl sm:text-3xl mt-5 opacity-100">Login Form</span>
+
       <form
         @submit.prevent="onSubmit"
-        class="bg-[#413b43] w-90 h-110 mt-3 rounded-xl flex flex-col justify-evenly items-center"
+        class="bg-[#413b43] w-80 sm:w-90 h-110 mt-3 rounded-xl flex flex-col"
       >
-        <FormField v-slot="{ componentField }" name="username">
-          <FormItem class="w-8/9">
-            <FormLabel>Username</FormLabel>
-            <FormControl>
-              <Input
-                type="text"
-                placeholder="Write your username..."
-                v-bind="componentField"
-                class="rounded-[none] shadow-md"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        </FormField>
-        <FormField v-slot="{ componentField }" name="email">
-          <FormItem class="w-8/9">
-            <FormLabel>E-Mail</FormLabel>
-            <FormControl>
-              <Input
-                type="text"
-                placeholder="Write your email..."
-                v-bind="componentField"
-                class="rounded-[none] shadow-md"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        </FormField>
-        <FormField v-slot="{ componentField }" name="password">
-          <FormItem class="w-8/9">
-            <FormLabel>Password</FormLabel>
-            <FormControl>
-              <Input
-                type="text"
-                placeholder="Write your password..."
-                v-bind="componentField"
-                class="rounded-[none] shadow-md aria-invalid:border-destructive"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        </FormField>
-        <Button type="submit" class="button w-1/2 text-xl" size="lg">
-          Submit
-        </Button>
+        <div
+          class="flex flex-col justify-center items-center w-full gap-10 mt-10"
+        >
+          <FormField v-slot="{ componentField }" name="email">
+            <FormItem class="w-8/9">
+              <FormLabel>E-Mail</FormLabel>
+              <FormControl>
+                <Input
+                  type="text"
+                  placeholder="Write your email..."
+                  v-bind="componentField"
+                  class="rounded-[none] shadow-md"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+          <FormField v-slot="{ componentField }" name="password">
+            <FormItem class="w-8/9">
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input
+                  type="text"
+                  placeholder="Write your password..."
+                  v-bind="componentField"
+                  class="rounded-[none] shadow-md aria-invalid:border-destructive"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+        </div>
+        <div class="flex flex-col items-center gap-3 mt-7">
+          <a
+            class="cursor-pointer underline"
+            @click="navigateTo('/registration')"
+            >I want to register</a
+          >
+          <Button type="submit" class="button w-1/2 text-xl mt-10" size="lg">
+            Submit
+          </Button>
+        </div>
       </form>
     </div>
   </div>
