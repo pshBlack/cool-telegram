@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="w-1/4 p-4 bg-[#312c32] overflow-y-auto rounded-2xl my-4 ml-4 shadow-xl"
+    class="w-1/4 p-4 bg-[#312c32] overflow-y-auto rounded-2xl my-4 ml-4 shadow-xl flex flex-col"
   >
     <div class="relative w-full max-w-sm items-center">
       <span
@@ -67,6 +67,14 @@
         </NuxtLink>
       </li>
     </ul>
+
+    <Button
+      type="submit"
+      class="button w-1/2 text-xl mt-auto flex justify-center self-center"
+      size="lg"
+      @click="logout"
+      >Logout >
+    </Button>
   </aside>
 </template>
 <script lang="ts" setup>
@@ -81,6 +89,12 @@ import { createPinia } from "pinia";
 setActivePinia(createPinia());
 const users = ref<any[]>([]);
 const text = ref("");
+
+const logout = async () => {
+  localStorage.removeItem("token");
+  await navigateTo("/login");
+};
+
 const findUser = useDebounceFn(async (newValue) => {
   if (text.value.length == 0) {
     users.value = [];
