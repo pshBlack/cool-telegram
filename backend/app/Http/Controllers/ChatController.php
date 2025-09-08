@@ -49,7 +49,7 @@ class ChatController extends Controller
 
         // add participants
         $chat->users()->attach([
-            $authUser->user_id => ['role' => 'member', 'joined_at' => now()],
+            $authUser->user_id => ['role' => 'owner', 'joined_at' => now()],
             $otherUser->user_id => ['role' => 'member', 'joined_at' => now()],
         ]);
 
@@ -58,7 +58,8 @@ class ChatController extends Controller
             'chat' => $chat->load('users')
         ], 201);
     }
-        // delete chat
+
+       // delete chat
     public function deleteChat(Request $request, $chatId)
     {
         $authUser = $request->user();
@@ -78,10 +79,8 @@ class ChatController extends Controller
 
         return response()->json(['message' => 'Chat deleted successfully']);
     }
-    
-
      
-  public function getUserChats(Request $request)
+    public function getUserChats(Request $request)
 {
     $authUser = $request->user();
 
@@ -101,7 +100,11 @@ class ChatController extends Controller
             return $chat;
         });
 
+
     return response()->json($chats);
 }
+
+
+
 
 }

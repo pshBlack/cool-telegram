@@ -53,13 +53,11 @@
 <script setup>
 import { UserPlus, Phone, Settings } from "lucide-vue-next";
 import { useChatsStore } from "@/stores/chatsStore";
-import { setActivePinia, createPinia } from "pinia";
 
-setActivePinia(createPinia());
 const route = useRoute();
 const chatsStore = useChatsStore();
 const chatId = computed(() => route.params.id); // айді з URL
-const currentChat = ref(null);
+const currentChat = ref();
 const messages = computed(() => chatsStore.chatMessages[chatId.value] || []);
 
 const newMessage = ref("");
@@ -87,5 +85,29 @@ onMounted(async () => {
   currentChat.value = chatId.value;
   scrollToBottom();
   await chatsStore.getMessageFromChat(chatId.value);
+});
+import { useEcho } from "@laravel/echo-vue";
+import { configureEcho } from "@laravel/echo-vue";
+
+configureEcho({
+  broadcaster: "reverb",
+  key: import.meta.env.VITE_REVERB_APP_KEY,
+  cluster: "mt1",
+  wsHost: import.meta.env.VITE_REVERB_HOST,
+  wsPort: Number(import.meta.env.VITE_REVERB_PORT),
+  wssPort: Number(import.meta.env.VITE_REVERB_PORT),
+  forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? "https") === "https",
+  encrypted: true,
+  enabledTransports: ["ws", "wss"],
+  authEndpoint: "http://localhost:8000/broadcasting/auth",
+  auth: {
+    headers: {
+      Authorization: `Bearer 13|kTdFeBkAjXTj6zfjxTo8j3Ddd7crxt4CQZeXrXFt0250c435`,
+    },
+  },
+});
+
+useEcho(`chat.${chatId.value}`, "MessageSent", (e) => {
+  console.log(e);
 });
 </script>

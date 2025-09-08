@@ -36,18 +36,17 @@ class MessageController extends Controller
             'sent_at' => now(),
             'is_read' => false,
         ]);
-        
-         //event(new MessageSent($chatId, $validated['content'], $authUser));
-
-         event(new MessageSent($message));
 
         return response()->json([
             'message' => 'Message sent',
             'data' => $message->load('sender')
         ], 201);
 
+        //event(new SendMessage($chatId, $validated['content'], $authUser));
+        event(new MessageSent($message));
+
     }
-    // delete message
+    
     public function deleteMessage(Request $request, $messageId)
     {
         $authUser = $request->user();
@@ -57,8 +56,7 @@ class MessageController extends Controller
        if (!$message) {
         return response()->json(['message' => 'Message not found'], 404);
     }
-
-    // validate sender message
+     // validate sender message
     if ($message->sender_id !== $authUser->user_id) {
         return response()->json(['message' => 'You can only delete your own messages'], 403);
     }
@@ -68,7 +66,9 @@ class MessageController extends Controller
     return response()->json(['message' => 'Message deleted']);
 
     }
- 
+
+
+
     // history of messages in chat
     public function getMessages(Request $request, $chatId)
     {

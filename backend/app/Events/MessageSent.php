@@ -7,7 +7,6 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Message;
-use App\Models\Chat;
 
 
 
@@ -24,10 +23,10 @@ class MessageSent implements ShouldBroadcast
 
     public function broadcastOn()
     {
-        return new PrivateChannel('chat.' . $this->message->chat_id);
+        return new PrivateChannel('chat.' . $this->message->chat_id); //{chat_id} warning
     }
 
-    public function broadcastAs()
+  public function broadcastAs()
     {
         return 'message.sent';
     }

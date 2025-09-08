@@ -41,6 +41,7 @@ Route::middleware(['auth:sanctum', CheckTokenExpiration::class])->group(function
     Route::get('/chats/{chatId}/messages', [MessageController::class, 'getMessages']);
     Route::post('/messages/{messageId}/read', [MessageController::class, 'markAsRead']);
     Route::delete('/messages/{messageId}', [MessageController::class, 'deleteMessage']);
+    
     //Route::get('/users/search', [UserController::class, 'search']);
     Route::get('/users/search/{username}', [UserController::class, 'search']);
     //Route::post('/users/search', [UserController::class, 'search']); //rofl ПАША не вбивай

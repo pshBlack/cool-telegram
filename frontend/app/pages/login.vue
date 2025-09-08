@@ -12,7 +12,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "vue-sonner";
 import { useUserStore } from "~/stores/userStore";
 
 const userStore = useUserStore();
@@ -29,28 +28,7 @@ const form = useForm({
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
-  try {
-    const response = await fetch("http://localhost:8000/api/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(values),
-    });
-    const data = await response.json();
-    if (response.ok) {
-      toast.success("Login successful");
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", data.user.username);
-      console.log(data);
-      await navigateTo("/chats");
-    } else {
-      toast.error("Login failed");
-    }
-  } catch (error) {
-    console.error("Error:", error);
-  }
+  await userStore.fetchLogin(values);
 });
 </script>
 
