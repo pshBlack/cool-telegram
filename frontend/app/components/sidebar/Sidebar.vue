@@ -37,12 +37,13 @@
             </div>
           </div>
 
-          <div
-            v-if="chat.unread > 0"
+          <!-- <div
+            v-if="chat.messages.is_read > 0"
             class="bg-red-800 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full"
           >
             {{ chat.unread }}
           </div>
+        -->
         </NuxtLink>
       </li>
     </ul>
@@ -99,7 +100,7 @@ const text = ref("");
 
 const logout = async () => {
   localStorage.removeItem("token");
-  localStorage.removeItem("username");
+  localStorage.removeItem("user");
   await navigateTo("/login");
 };
 
@@ -133,7 +134,7 @@ const filteredChats = computed(() =>
   chatStore.chats
     .map((chat) => {
       // знаходимо іншого користувача
-      const otherUser = chat.users.find(
+      const otherUser: any = chat.users.find(
         (u: any) => u.username !== localStorage.getItem("user")
       );
       return {

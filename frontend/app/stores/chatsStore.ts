@@ -1,12 +1,13 @@
 import { defineStore } from "pinia";
 import axios from "axios";
 import { ref } from "vue";
+import type { Chat } from "~/constants/interfaces";
 
 export const useChatsStore = defineStore("chats", () => {
-  const chats = ref<any[]>([]);
+  const chats = ref<Chat[]>([]);
   const loading = ref(true);
   const chatMessages = reactive<Record<number, any[]>>({});
-  const fetchChats = async () => {
+  const fetchChats = async (): Promise<void> => {
     try {
       const { data } = await axios.get("http://localhost:8000/api/chats", {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -16,7 +17,7 @@ export const useChatsStore = defineStore("chats", () => {
       loading.value = false;
     }
   };
-  const createChat = async (identifier: string) => {
+  const createChat = async (identifier: string): Promise<Chat> => {
     const { data } = await axios.post(
       "http://localhost:8000/api/chats",
       { identifier },

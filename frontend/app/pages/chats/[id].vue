@@ -53,13 +53,11 @@
 <script setup>
 import { UserPlus, Phone, Settings } from "lucide-vue-next";
 import { useChatsStore } from "@/stores/chatsStore";
-import { setActivePinia, createPinia } from "pinia";
 
-setActivePinia(createPinia());
 const route = useRoute();
 const chatsStore = useChatsStore();
 const chatId = computed(() => route.params.id); // айді з URL
-const currentChat = ref(null);
+const currentChat = ref();
 const messages = computed(() => chatsStore.chatMessages[chatId.value] || []);
 
 const newMessage = ref("");

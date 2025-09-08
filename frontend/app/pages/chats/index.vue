@@ -16,8 +16,4 @@ onMounted(async () => {
   const token = localStorage.getItem("token");
   await userStore.fetchUser(token as string);
 });
-
-definePageMeta({
-  middleware: (to, from) => {},
-});
 </script>
