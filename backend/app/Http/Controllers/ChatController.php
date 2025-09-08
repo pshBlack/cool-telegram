@@ -78,9 +78,10 @@ class ChatController extends Controller
 
         return response()->json(['message' => 'Chat deleted successfully']);
     }
+    
 
      
-    public function getUserChats(Request $request)
+  public function getUserChats(Request $request)
 {
     $authUser = $request->user();
 
@@ -88,12 +89,19 @@ class ChatController extends Controller
         ->with(['users:user_id,username,email,avatar_url', 'messages' => function ($q) {
             $q->latest('sent_at')->limit(1); // last message
         }])
-        ->get();
+        ->get()
+        ->map(function ($chat) use ($authUser) {
+            // get display name
+            if ($chat->chat_type === 'one_to_one') {
+                $otherUser = $chat->users->firstWhere('user_id', '!=', $authUser->user_id);
+                $chat->display_name = $otherUser ? $otherUser->username : 'Unknown';
+            } else {
+                $chat->display_name = $chat->name ?? 'Group Chat';
+            }
+            return $chat;
+        });
 
     return response()->json($chats);
 }
-
-
-
 
 }
