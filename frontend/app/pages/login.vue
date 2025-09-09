@@ -30,6 +30,11 @@ const form = useForm({
 const onSubmit = form.handleSubmit(async (values) => {
   await userStore.fetchLogin(values);
 });
+
+onMounted(async () => {
+  if (useCookie("XSRF-TOKEN").value) await navigateTo("/chats");
+  console.log(useCookie("XSRF-TOKEN").value);
+});
 </script>
 
 <template>

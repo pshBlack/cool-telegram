@@ -13,7 +13,6 @@ import { useUserStore } from "~/stores/userStore";
 const userStore = useUserStore();
 
 onMounted(async () => {
-  const token = localStorage.getItem("token");
-  await userStore.fetchUser(token as string);
+  await userStore.fetchUser();
 });
 </script>

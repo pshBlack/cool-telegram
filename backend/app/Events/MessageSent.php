@@ -23,11 +23,27 @@ class MessageSent implements ShouldBroadcast
 
     public function broadcastOn()
     {
-        return new PrivateChannel('chat.{chat_id}' . $this->message->chat_id);
+        return new PrivateChannel('chat.' . $this->message->chat_id); //{chat_id} warning
     }
 
-    public function broadcastAs()
+  public function broadcastAs()
     {
         return 'message.sent';
+    }
+     public function broadcastWith()
+    {
+        return [
+            'message_id'=> $this->message->message_id,
+            'chat_id'   => $this->message->chat_id,
+            'sender_id' => $this->message->sender_id,
+            'content'   => $this->message->content,
+            'sender'    => $this->message->sender ? [
+                'user_id'   => $this->message->sender->user_id,
+                'username'  => $this->message->sender->username,
+                'email'     => $this->message->sender->email,
+                'avatar'    => $this->message->sender->avatar_url,
+            ]: null,
+            
+        ];
     }
 }

@@ -14,25 +14,30 @@ interface registerSchema {
 }
 
 export const useUserStore = defineStore("user", () => {
-  const user = ref<User | null>(null);
   const loading = ref(true);
 
-  const fetchUser = async (token: string): Promise<void> => {
+  const fetchUser = async (): Promise<void> => {
     try {
-      const response = await fetch("http://localhost:8000/api/user", {
-        method: "GET",
+      const response = await axios.get("http://localhost:8000/api/user", {
         headers: {
-          "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer ${token}`,
+          "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
         },
+        withCredentials: true,
       });
-      const data: User = await response.json();
-      if (response.ok) {
-        user.value = data;
+
+      if (response.status === 200) {
+        const user = useCookie("user");
+        user.value = response.data.username;
         navigateTo("/chats");
       } else if (response.status === 401) {
-        localStorage.removeItem("token");
+        toast.error("Unauthorized");
+
+        const token = useCookie("token");
+        const user = useCookie("user");
+        token.value = "";
+        user.value = "";
+
         navigateTo("/login");
       }
     } catch (error) {
@@ -41,19 +46,27 @@ export const useUserStore = defineStore("user", () => {
     }
   };
   const fetchRegister = async (values: registerSchema): Promise<void> => {
+    await callCookie();
     try {
-      const response = await fetch("http://localhost:8000/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-      const data: User & Token = await response.json();
-      if (response.ok) {
+      const response = await axios.post(
+        "http://localhost:8000/api/register",
+        values,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
+          },
+          withCredentials: true,
+        }
+      );
+
+      if (response.status === 200) {
         toast.success("Registration successful");
-        localStorage.setItem("token", data.token);
+        const token = useCookie("token");
+        const user = useCookie("user");
+        token.value = response.data.token;
+        user.value = response.data.user.username;
         await navigateTo("/chats");
       } else {
         toast.error("Registration failed");
@@ -66,21 +79,25 @@ export const useUserStore = defineStore("user", () => {
 
   const fetchLogin = async (values: loginSchema): Promise<void> => {
     try {
-      const response = await fetch("http://localhost:8000/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-      const data: { message: string } & User & Token = await response.json();
-      if (response.ok) {
+      await callCookie();
+      const response = await axios.post(
+        "http://localhost:8000/api/login",
+        values,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            accept: "application/json",
+            "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
+          },
+          withCredentials: true,
+        }
+      );
+      if (response.status === 200) {
         toast.success("Login successful");
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", data.user.username);
-        console.log(data);
-        await navigateTo("/chats");
+        const user = useCookie("user");
+        user.value = response.data.user.username;
+        console.log(response.data);
+        // await navigateTo("/chats");
       } else {
         toast.error("Login failed");
       }
@@ -89,6 +106,11 @@ export const useUserStore = defineStore("user", () => {
       toast.error("Something went wrong");
     }
   };
+  const callCookie = async () => {
+    await axios.get("http://localhost:8000/sanctum/csrf-cookie", {
+      withCredentials: true,
+    });
+  };
 
-  return { user, loading, fetchUser, fetchRegister, fetchLogin };
+  return { loading, fetchUser, fetchRegister, fetchLogin };
 });

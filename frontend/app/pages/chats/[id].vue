@@ -53,6 +53,7 @@
 <script setup>
 import { UserPlus, Phone, Settings } from "lucide-vue-next";
 import { useChatsStore } from "@/stores/chatsStore";
+import { configureEcho } from "@laravel/echo-vue";
 
 const route = useRoute();
 const chatsStore = useChatsStore();
@@ -73,9 +74,6 @@ function scrollToBottom() {
 }
 const sendMessage = async () => {
   if (!newMessage.value) return;
-  console.log(
-    await chatsStore.sendMessageToChat(chatId.value, newMessage.value)
-  );
 
   newMessage.value = "";
   scrollToBottom();
@@ -87,8 +85,7 @@ onMounted(async () => {
   await chatsStore.getMessageFromChat(chatId.value);
 });
 import { useEcho } from "@laravel/echo-vue";
-import { configureEcho } from "@laravel/echo-vue";
-
+import axios from "axios";
 configureEcho({
   broadcaster: "reverb",
   key: import.meta.env.VITE_REVERB_APP_KEY,
@@ -100,14 +97,36 @@ configureEcho({
   encrypted: true,
   enabledTransports: ["ws", "wss"],
   authEndpoint: "http://localhost:8000/broadcasting/auth",
-  auth: {
-    headers: {
-      Authorization: `Bearer 28|QYPwxNCO3CpFyCbfAbKb19gkfrsTWc9UEVVyr67l6a7f53f1`,
-    },
+  authorizer: (channel, options) => {
+    return {
+      authorize: (socketId, callback) => {
+        axios
+          .post(
+            "http://localhost:8000/broadcasting/auth",
+            {
+              socket_id: socketId,
+
+              channel_name: channel.name,
+            },
+            {
+              withCredentials: true,
+            }
+          )
+
+          .then((response) => {
+            callback(null, response.data);
+          })
+
+          .catch((error) => {
+            callback(error);
+          });
+      },
+    };
   },
 });
-
 useEcho(`chat.${chatId.value}`, "MessageSent", (e) => {
+  console.log(e);
+}).listen("MessageSent", (e) => {
   console.log(e);
 });
 </script>
