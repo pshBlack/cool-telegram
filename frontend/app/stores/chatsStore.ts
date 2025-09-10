@@ -29,10 +29,16 @@ export const useChatsStore = defineStore("chats", () => {
     }
   };
   const createChat = async (identifier: string): Promise<Chat> => {
+    await callCookie();
     const { data } = await axios.post(
       "http://localhost:8000/api/chats",
       { identifier },
       {
+        headers: {
+          Accept: "application/json",
+          "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
+        },
+
         withCredentials: true,
       }
     );
