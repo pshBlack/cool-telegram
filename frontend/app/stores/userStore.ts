@@ -28,7 +28,7 @@ export const useUserStore = defineStore("user", () => {
 
       if (response.status === 200) {
         const user = useCookie("user");
-        user.value = response.data.username;
+        user.value = response.data.user.username;
         navigateTo("/chats");
       } else if (response.status === 401) {
         toast.error("Unauthorized");
@@ -97,7 +97,7 @@ export const useUserStore = defineStore("user", () => {
         const user = useCookie("user");
         user.value = response.data.user.username;
         console.log(response.data);
-        // await navigateTo("/chats");
+        await navigateTo("/chats");
       } else {
         toast.error("Login failed");
       }

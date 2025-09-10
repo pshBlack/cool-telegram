@@ -42,6 +42,6 @@ Route::middleware([EnsureFrontendRequestsAreStateful::class,'auth:sanctum'] )->g
     Route::get('/users/search/{username}', [UserController::class, 'search']);
     
     // Broadcast routes
-    Broadcast::routes(['middleware' => ['auth:sanctum']]);
+    Broadcast::routes(['middleware' => ['auth:sanctum',EnsureFrontendRequestsAreStateful::class]]);
     
 });

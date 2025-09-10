@@ -135,7 +135,7 @@ const filteredChats = computed(() =>
     .map((chat) => {
       // знаходимо іншого користувача
       const otherUser: any = chat.users.find(
-        (u: any) => u.username !== localStorage.getItem("user")
+        (u: any) => u.username !== useCookie("user").value
       );
       return {
         ...chat,

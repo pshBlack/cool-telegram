@@ -27,7 +27,7 @@
           :key="msg.message_id"
           class="p-4 rounded-lg max-w-xs"
           :class="
-            msg.me
+            msg.me || msg.sender.username === name.value
               ? 'bg-[#3a1016] text-[#EDEDEC] ml-auto'
               : 'bg-[#4a444d] text-[#EDEDEC]'
           "
@@ -59,8 +59,8 @@ const route = useRoute();
 const chatsStore = useChatsStore();
 const chatId = computed(() => route.params.id); // айді з URL
 const currentChat = ref();
-const messages = computed(() => chatsStore.chatMessages[chatId.value] || []);
-
+const messages = computed(() => chatsStore.chatMessages[chatId.value]);
+const name = computed(() => useCookie("user"));
 const newMessage = ref("");
 
 const messagesContainer = ref(null);
@@ -74,6 +74,7 @@ function scrollToBottom() {
 }
 const sendMessage = async () => {
   if (!newMessage.value) return;
+  await chatsStore.sendMessageToChat(chatId.value, newMessage.value);
 
   newMessage.value = "";
   scrollToBottom();
@@ -124,9 +125,11 @@ configureEcho({
     };
   },
 });
-useEcho(`chat.${chatId.value}`, "MessageSent", (e) => {
-  console.log(e);
-}).listen("MessageSent", (e) => {
-  console.log(e);
-});
+const { leaveChannel, leave, stopListening, listen } = useEcho(
+  `chat.${chatId.value}`,
+  ".message.sent",
+  (e) => {
+    console.log(e);
+  }
+);
 </script>

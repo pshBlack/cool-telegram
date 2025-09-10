@@ -42,17 +42,23 @@ export const useChatsStore = defineStore("chats", () => {
   };
 
   const sendMessageToChat = async (chatId: number, message: string) => {
+    await callCookie();
     const { data } = await axios.post(
       `http://localhost:8000/api/chats/${chatId}/messages`,
       { content: message },
-      { withCredentials: true }
+      {
+        headers: {
+          Accept: "application/json",
+          "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
+        },
+        withCredentials: true,
+      }
     );
     if (!chatMessages[chatId]) chatMessages[chatId] = [];
     chatMessages[chatId]?.push({
-      ...data,
+      ...data.data,
       me: true, // щоб UI показував, що це твоє повідомлення
     });
-    console.log(chatMessages);
     return data;
   };
 
