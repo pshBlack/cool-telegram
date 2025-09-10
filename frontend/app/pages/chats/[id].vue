@@ -129,7 +129,7 @@ const { leaveChannel, leave, stopListening, listen } = useEcho(
   `chat.${chatId.value}`,
   ".message.sent",
   (e) => {
-    console.log(e);
+    chatsStore.chatMessages[chatId.value].push(e);
   }
 );
 </script>

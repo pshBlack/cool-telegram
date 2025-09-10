@@ -60,11 +60,7 @@ export const useChatsStore = defineStore("chats", () => {
         withCredentials: true,
       }
     );
-    if (!chatMessages[chatId]) chatMessages[chatId] = [];
-    chatMessages[chatId]?.push({
-      ...data.data,
-      me: true, // щоб UI показував, що це твоє повідомлення
-    });
+
     return data;
   };
 
