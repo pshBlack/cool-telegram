@@ -7,10 +7,21 @@ export const useChatsStore = defineStore("chats", () => {
   const chats = ref<Chat[]>([]);
   const loading = ref(true);
   const chatMessages = reactive<Record<number, any[]>>({});
+
+  const callCookie = async () => {
+    await axios.get("http://localhost:8000/sanctum/csrf-cookie", {
+      withCredentials: true,
+    });
+  };
+
   const fetchChats = async (): Promise<void> => {
     try {
       const { data } = await axios.get("http://localhost:8000/api/chats", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        headers: {
+          Accept: "application/json",
+          "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
+        },
+        withCredentials: true,
       });
       chats.value = data;
     } finally {
@@ -18,10 +29,18 @@ export const useChatsStore = defineStore("chats", () => {
     }
   };
   const createChat = async (identifier: string): Promise<Chat> => {
+    await callCookie();
     const { data } = await axios.post(
       "http://localhost:8000/api/chats",
       { identifier },
-      { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      {
+        headers: {
+          Accept: "application/json",
+          "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
+        },
+
+        withCredentials: true,
+      }
     );
     await navigateTo(`/chats/${data.chat.chat_id}`);
     await fetchChats();
@@ -29,24 +48,26 @@ export const useChatsStore = defineStore("chats", () => {
   };
 
   const sendMessageToChat = async (chatId: number, message: string) => {
+    await callCookie();
     const { data } = await axios.post(
       `http://localhost:8000/api/chats/${chatId}/messages`,
       { content: message },
-      { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      {
+        headers: {
+          Accept: "application/json",
+          "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
+        },
+        withCredentials: true,
+      }
     );
-    if (!chatMessages[chatId]) chatMessages[chatId] = [];
-    chatMessages[chatId]?.push({
-      ...data,
-      me: true, // щоб UI показував, що це твоє повідомлення
-    });
-    console.log(chatMessages);
+
     return data;
   };
 
   const getMessageFromChat = async (chatId: number) => {
     const { data } = await axios.get(
       `http://localhost:8000/api/chats/${chatId}/messages`,
-      { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      { withCredentials: true }
     );
     chatMessages[chatId] = data.map((msg: any) => ({
       ...msg,
@@ -62,5 +83,6 @@ export const useChatsStore = defineStore("chats", () => {
     createChat,
     sendMessageToChat,
     getMessageFromChat,
+    callCookie,
   };
 });

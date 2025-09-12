@@ -36,6 +36,7 @@ class MessageController extends Controller
             'sent_at' => now(),
             'is_read' => false,
         ]);
+        event(new MessageSent($message));
 
         return response()->json([
             'message' => 'Message sent',
@@ -43,7 +44,7 @@ class MessageController extends Controller
         ], 201);
 
         //event(new SendMessage($chatId, $validated['content'], $authUser));
-        event(new MessageSent($message));
+        
 
     }
     

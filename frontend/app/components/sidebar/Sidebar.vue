@@ -99,9 +99,14 @@ const users = ref<any[]>([]);
 const text = ref("");
 
 const logout = async () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
+  await axios.post("http://localhost:8000/api/logout");
   await navigateTo("/login");
+};
+
+const callCookie = async () => {
+  await axios.get("http://localhost:8000/sanctum/csrf-cookie", {
+    withCredentials: true,
+  });
 };
 
 const findUser = useDebounceFn(async (newValue) => {
@@ -109,13 +114,15 @@ const findUser = useDebounceFn(async (newValue) => {
     users.value = [];
     return;
   }
-
+  callCookie();
   const { data } = await axios.get(
     `http://localhost:8000/api/users/search/${newValue}`,
     {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Accept: "application/json",
+        "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
       },
+      withCredentials: true,
     }
   );
   users.value = data;
@@ -135,7 +142,7 @@ const filteredChats = computed(() =>
     .map((chat) => {
       // знаходимо іншого користувача
       const otherUser: any = chat.users.find(
-        (u: any) => u.username !== localStorage.getItem("user")
+        (u: any) => u.username !== useCookie("user").value
       );
       return {
         ...chat,

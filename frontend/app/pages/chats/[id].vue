@@ -27,7 +27,7 @@
           :key="msg.message_id"
           class="p-4 rounded-lg max-w-xs"
           :class="
-            msg.me
+            msg.me || msg.sender.username === name.value
               ? 'bg-[#3a1016] text-[#EDEDEC] ml-auto'
               : 'bg-[#4a444d] text-[#EDEDEC]'
           "
@@ -53,13 +53,14 @@
 <script setup>
 import { UserPlus, Phone, Settings } from "lucide-vue-next";
 import { useChatsStore } from "@/stores/chatsStore";
+import { configureEcho } from "@laravel/echo-vue";
 
 const route = useRoute();
 const chatsStore = useChatsStore();
 const chatId = computed(() => route.params.id); // айді з URL
 const currentChat = ref();
-const messages = computed(() => chatsStore.chatMessages[chatId.value] || []);
-
+const messages = computed(() => chatsStore.chatMessages[chatId.value]);
+const name = computed(() => useCookie("user"));
 const newMessage = ref("");
 
 const messagesContainer = ref(null);
@@ -73,9 +74,7 @@ function scrollToBottom() {
 }
 const sendMessage = async () => {
   if (!newMessage.value) return;
-  console.log(
-    await chatsStore.sendMessageToChat(chatId.value, newMessage.value)
-  );
+  await chatsStore.sendMessageToChat(chatId.value, newMessage.value);
 
   newMessage.value = "";
   scrollToBottom();
@@ -87,8 +86,7 @@ onMounted(async () => {
   await chatsStore.getMessageFromChat(chatId.value);
 });
 import { useEcho } from "@laravel/echo-vue";
-import { configureEcho } from "@laravel/echo-vue";
-
+import axios from "axios";
 configureEcho({
   broadcaster: "reverb",
   key: import.meta.env.VITE_REVERB_APP_KEY,
@@ -100,14 +98,38 @@ configureEcho({
   encrypted: true,
   enabledTransports: ["ws", "wss"],
   authEndpoint: "http://localhost:8000/broadcasting/auth",
-  auth: {
-    headers: {
-      Authorization: `Bearer 13|kTdFeBkAjXTj6zfjxTo8j3Ddd7crxt4CQZeXrXFt0250c435`,
-    },
+  authorizer: (channel, options) => {
+    return {
+      authorize: (socketId, callback) => {
+        axios
+          .post(
+            "http://localhost:8000/broadcasting/auth",
+            {
+              socket_id: socketId,
+
+              channel_name: channel.name,
+            },
+            {
+              withCredentials: true,
+            }
+          )
+
+          .then((response) => {
+            callback(null, response.data);
+          })
+
+          .catch((error) => {
+            callback(error);
+          });
+      },
+    };
   },
 });
-
-useEcho(`chat.${chatId.value}`, "MessageSent", (e) => {
-  console.log(e);
-});
+const { leaveChannel, leave, stopListening, listen } = useEcho(
+  `chat.${chatId.value}`,
+  ".message.sent",
+  (e) => {
+    chatsStore.chatMessages[chatId.value].push(e);
+  }
+);
 </script>

@@ -13,7 +13,7 @@ class ChatController extends Controller
         $validated = $request->validate([
             'identifier' => 'required|string', // email or username
         ]);
-
+        
         $authUser = $request->user();
 
         $otherUser = User::where('email', $validated['identifier'])
@@ -43,6 +43,7 @@ class ChatController extends Controller
 
         // create new chat
         $chat = Chat::create([
+
             'chat_type' => 'one_to_one',
             'created_by' => $authUser->user_id,
         ]);
