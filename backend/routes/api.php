@@ -40,6 +40,8 @@ Route::middleware([EnsureFrontendRequestsAreStateful::class,'auth:sanctum'] )->g
     Route::get('/chats/{chatId}/messages', [MessageController::class, 'getMessages']);
     Route::post('/messages/{messageId}/read', [MessageController::class, 'markAsRead']);
     Route::delete('/messages/{messageId}', [MessageController::class, 'deleteMessage']);
+    
+    Route::post('/messages/{messageId}', [MessageController::class, 'editMessage']);
    
     Route::get('/users/search/{username}', [UserController::class, 'search']);
     
