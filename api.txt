@@ -1,0 +1,126 @@
+post http://localhost:8000/api/login
+{
+    "message": "Login successful",
+    "user": {
+        "user_id": 11,
+        "username": "vlad",
+        "first_name": null,
+        "last_name": null,
+        "email": "vlad12@gmail.com",
+        "google_id": null,
+        "avatar_url": null,
+        "bio": null,
+        "created_at": "2025-09-06T20:17:10.000000Z",
+        "last_seen_at": null,
+        "updated_at": "2025-09-06T20:17:10.000000Z"
+    },
+    "token": "8|1v23iSHjezTdRmohv6d3O8Q5lK3JWNgaExUVY8VHbbf86c8f"
+}
+get http://localhost:8000/api/chats
+[
+    {
+        "chat_id": 1,
+        "chat_type": "one_to_one",
+        "chat_name": null,
+        "chat_avatar_url": null,
+        "created_by": 11,
+        "created_at": "2025-09-06T20:18:11.000000Z",
+        "updated_at": "2025-09-06T20:18:11.000000Z",
+        "display_name": "marcella12",
+        "pivot": {
+            "user_id": 11,
+            "chat_id": 1,
+            "role": "owner",
+            "joined_at": "2025-09-06 20:18:11"
+        },
+        "users": [
+            {
+                "user_id": 2,
+                "username": "marcella12",
+                "email": "kane09@example.com",
+                "avatar_url": "https://via.placeholder.com/100x100.png/005599?text=people+molestiae",
+                "pivot": {
+                    "chat_id": 1,
+                    "user_id": 2,
+                    "role": "member",
+                    "joined_at": "2025-09-06 20:18:11"
+                }
+            },
+            {
+                "user_id": 11,
+                "username": "vlad",
+                "email": "vlad12@gmail.com",
+                "avatar_url": null,
+                "pivot": {
+                    "chat_id": 1,
+                    "user_id": 11,
+                    "role": "owner",
+                    "joined_at": "2025-09-06 20:18:11"
+                }
+            }
+        ],
+        "messages": [
+            {
+                "message_id": 30,
+                "chat_id": 1,
+                "sender_id": 11,
+                "content": "ві",
+                "sent_at": "2025-09-07T18:35:43.000000Z",
+                "is_read": false
+            }
+        ]
+    }
+]
+
+post http://localhost:8000/api/chats
+{
+    "message": "Chat created",
+    "chat": {
+        "chat_type": "one_to_one",
+        "created_by": 11,
+        "updated_at": "2025-09-08T09:57:05.000000Z",
+        "created_at": "2025-09-08T09:57:05.000000Z",
+        "chat_id": 2,
+        "display_name": "izaiah73",
+        "users": [
+            {
+                "user_id": 4,
+                "username": "izaiah73",
+                "first_name": "Rosa",
+                "last_name": "Kshlerin",
+                "email": "gprohaska@example.org",
+                "google_id": null,
+                "avatar_url": "https://via.placeholder.com/100x100.png/004466?text=people+voluptatem",
+                "bio": "Suscipit sunt eveniet voluptatem nihil ipsam tempora in natus.",
+                "created_at": "2025-09-06T20:16:36.000000Z",
+                "last_seen_at": "2025-09-06 20:16:36",
+                "updated_at": "2025-09-06T20:16:36.000000Z",
+                "pivot": {
+                    "chat_id": 2,
+                    "user_id": 4,
+                    "role": "member",
+                    "joined_at": "2025-09-08 09:57:05"
+                }
+            },
+            {
+                "user_id": 11,
+                "username": "vlad",
+                "first_name": null,
+                "last_name": null,
+                "email": "vlad12@gmail.com",
+                "google_id": null,
+                "avatar_url": null,
+                "bio": null,
+                "created_at": "2025-09-06T20:17:10.000000Z",
+                "last_seen_at": null,
+                "updated_at": "2025-09-06T20:17:10.000000Z",
+                "pivot": {
+                    "chat_id": 2,
+                    "user_id": 11,
+                    "role": "member",
+                    "joined_at": "2025-09-08 09:57:05"
+                }
+            }
+        ]
+    }
+}
