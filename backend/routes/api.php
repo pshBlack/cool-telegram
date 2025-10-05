@@ -50,10 +50,6 @@ Route::middleware([EnsureFrontendRequestsAreStateful::class,'auth:sanctum'] )->g
     // update bio
     Route::post('/users/bio', [UserController::class, 'updateBio']);
 
-
-
-
-    
     // Broadcast routes
     Broadcast::routes(['middleware' => ['auth:sanctum',EnsureFrontendRequestsAreStateful::class]]);
     

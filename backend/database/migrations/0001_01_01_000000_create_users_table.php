@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         // Users table
         Schema::create('users', function (Blueprint $table) {
-            $table->id('user_id');
+            $table->uuid('user_id')->primary();
             $table->string('username', 50)->unique();
             $table->string('first_name', 100)->nullable();
             $table->string('last_name', 100)->nullable();
@@ -18,22 +18,20 @@ return new class extends Migration {
             $table->string('google_id', 255)->unique()->nullable();
             $table->string('avatar_url', 255)->nullable();
             $table->text('bio')->nullable();
-            $table->timestamp('created_at')->useCurrent();
+            $table->timestamps();
             $table->timestamp('last_seen_at')->nullable();
-            $table->timestamp('updated_at')->nullable();
 
-        });
+        }); 
 
-        // Chats table
+         // Chats table
         Schema::create('chats', function (Blueprint $table) {
-            $table->id('chat_id');
+            $table->uuid('chat_id')->primary();
             $table->enum('chat_type', ['one_to_one', 'group']);
             $table->string('chat_name', 255)->nullable();
             $table->string('chat_avatar_url', 255)->nullable();
-            $table->unsignedBigInteger('created_by')->nullable();
-            $table->timestamp('created_at')->useCurrent();
-            $table->timestamp('updated_at')->nullable();
-            
+            $table->uuid('created_by')->nullable();
+            $table->timestamps();
+
             $table->foreign('created_by')
                 ->references('user_id')->on('users')
                 ->onDelete('set null');
@@ -41,9 +39,9 @@ return new class extends Migration {
 
         // Messages table
         Schema::create('messages', function (Blueprint $table) {
-            $table->id('message_id');
-            $table->unsignedBigInteger('chat_id');
-            $table->unsignedBigInteger('sender_id');
+            $table->uuid('message_id')->primary();
+            $table->uuid('chat_id');
+            $table->uuid('sender_id');
             $table->text('content');
             $table->timestamp('sent_at')->useCurrent();
             $table->boolean('is_read')->default(false);
@@ -59,9 +57,9 @@ return new class extends Migration {
 
         // Chat Participants table
         Schema::create('chat_participants', function (Blueprint $table) {
-            $table->id('participant_id');
-            $table->unsignedBigInteger('chat_id');
-            $table->unsignedBigInteger('user_id');
+            $table->uuid('participant_id')->primary();
+            $table->uuid('chat_id');
+            $table->uuid('user_id');
             $table->timestamp('joined_at')->useCurrent();
             $table->enum('role', ['member', 'admin', 'owner'])->default('member');
 

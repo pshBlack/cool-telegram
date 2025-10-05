@@ -99,7 +99,7 @@ class ChatController extends Controller
                 $otherUser = $chat->users->firstWhere('user_id', '!=', $authUser->user_id);
                 $chat->display_name = $otherUser ? $otherUser->username : 'Unknown';
             } else {
-                $chat->display_name = $chat->name ?? 'Group Chat';
+                $chat->display_name = $chat->chat_name ?? 'Group Chat';
             }
             return $chat;
         });
