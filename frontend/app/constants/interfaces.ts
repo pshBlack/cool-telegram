@@ -38,8 +38,7 @@ export interface Chat {
     joined_at: Date;
   };
   users: User[];
-  messages: Message[];
-}
-export interface Token {
-  token: string;
+  messages: Message[] & {
+    content: string;
+  };
 }

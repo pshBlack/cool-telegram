@@ -12,7 +12,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useUserStore } from "~/stores/userStore";
+import { useUserStore } from "~/store/userStore";
 
 const userStore = useUserStore();
 
@@ -32,8 +32,7 @@ const onSubmit = form.handleSubmit(async (values) => {
 });
 
 onMounted(async () => {
-  if (useCookie("XSRF-TOKEN").value) await navigateTo("/chats");
-  console.log(useCookie("XSRF-TOKEN").value);
+  await userStore.fetchUser();
 });
 </script>
 

@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import axios from "axios";
 import { ref } from "vue";
 import { toast } from "vue-sonner";
-import type { User, Token } from "~/constants/interfaces";
+
 interface loginSchema {
   email?: string;
   password?: string;
@@ -18,31 +18,34 @@ export const useUserStore = defineStore("user", () => {
 
   const fetchUser = async (): Promise<void> => {
     try {
-      const response = await axios.get("http://localhost:8000/api/user", {
-        headers: {
-          Accept: "application/json",
-          "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
-        },
-        withCredentials: true,
-      });
+      const { data, status } = await axios.get(
+        "http://localhost:8000/api/user",
+        {
+          headers: {
+            Accept: "application/json",
+            "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
+          },
+          withCredentials: true,
+        }
+      );
 
-      if (response.status === 200) {
+      if (status === 200) {
         const user = useCookie("user");
-        user.value = response.data.user.username;
+        user.value = data.user.username;
+
         navigateTo("/chats");
-      } else if (response.status === 401) {
-        toast.error("Unauthorized");
-
-        const token = useCookie("token");
-        const user = useCookie("user");
-        token.value = "";
-        user.value = "";
-
-        navigateTo("/login");
       }
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Something went wrong");
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        toast.error("Unauthorized");
+        useCookie("user").value = "";
+        useCookie("XSRF-TOKEN").value = "";
+        useCookie("laravel-session").value = "";
+        navigateTo("/login");
+      } else {
+        console.error("Error:", error);
+        toast.error("Something went wrong");
+      }
     }
   };
   const fetchRegister = async (values: registerSchema): Promise<void> => {
@@ -110,6 +113,11 @@ export const useUserStore = defineStore("user", () => {
     await axios.get("http://localhost:8000/sanctum/csrf-cookie", {
       withCredentials: true,
     });
+  };
+
+  const logout = async () => {
+    await callCookie();
+    await axios.post("http://localhost:8000/api/logout");
   };
 
   return { loading, fetchUser, fetchRegister, fetchLogin };

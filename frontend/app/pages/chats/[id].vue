@@ -11,7 +11,7 @@
         class="p-4 m-2 bg-[#4a444c] rounded-2xl flex justify-between items-center"
       >
         <h2 class="text-xl font-bold">
-          {{ currentChat?.name || "Чат" }}
+          {{ currentChat?.display_name || "Чат" }}
         </h2>
         <div class="flex gap-5">
           <UserPlus class="size-7 cursor-pointer" />
@@ -22,17 +22,61 @@
 
       <!-- Повідомлення -->
       <div ref="messagesContainer" class="flex-1 p-4 overflow-y-auto space-y-2">
-        <div
-          v-for="msg in messages"
-          :key="msg.message_id"
-          class="p-4 rounded-lg max-w-xs"
-          :class="
-            msg.me || msg.sender.username === name.value
-              ? 'bg-[#3a1016] text-[#EDEDEC] ml-auto'
-              : 'bg-[#4a444d] text-[#EDEDEC]'
-          "
-        >
-          {{ msg.content }}
+        <div v-for="msg in messages" :key="msg.message_id">
+          <ContextMenu asChild>
+            <ContextMenuTrigger>
+              <div
+                class="p-3 rounded-lg break-words inline-flex min-w-[15%] max-w-fit items-end justify-between"
+                :class="
+                  msg.sender.username === name.value
+                    ? 'bg-[#3a1016] text-[#EDEDEC]'
+                    : 'bg-[#4a444d] text-[#EDEDEC]'
+                "
+              >
+                {{ msg.content }}
+
+                <div class="flex items-end">
+                  <Transition name="time">
+                    <span
+                      class="text-base text-(--muted-foreground) ml-2 pl-2 translate-y-2 transition-all"
+                      >{{ useDateFormat(msg.sent_at, "HH:mm") }}</span
+                    >
+                  </Transition>
+
+                  <Check
+                    v-if="
+                      msg.status !== 'sent' &&
+                      msg.sender.username === name.value
+                    "
+                    class="ml-2 size-4 translate-y-1.5 text-[#bbbabb] transition-all"
+                  />
+                  <Transition name="check">
+                    <div
+                      v-if="
+                        msg.status === 'sent' &&
+                        msg.sender.username === name.value
+                      "
+                      class="flex translate-y-1.5 transition-translate"
+                    >
+                      <Check class="size-4 translate-x-2 text-[#bbbabb]" />
+
+                      <Check class="size-4 text-[#bbbabb]" />
+                    </div>
+                  </Transition>
+                </div>
+              </div>
+            </ContextMenuTrigger>
+
+            <ContextMenuContent>
+              <ContextMenuItem @click="() => deleteMessage(msg.message_id)">
+                <Trash2 class="mr-2" />
+                Delete
+              </ContextMenuItem>
+              <ContextMenuItem @click="() => console.log(msg.message_id)">
+                <InfoIcon class="mr-2" />Message ID</ContextMenuItem
+              >
+            </ContextMenuContent>
+          </ContextMenu>
         </div>
       </div>
 
@@ -52,13 +96,32 @@
 
 <script setup>
 import { UserPlus, Phone, Settings } from "lucide-vue-next";
-import { useChatsStore } from "@/stores/chatsStore";
+import { useChatsStore } from "~/store/chatsStore";
 import { configureEcho } from "@laravel/echo-vue";
-
+import { Trash2, InfoIcon, Check } from "lucide-vue-next";
+import {
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { useDateFormat } from "@vueuse/core";
 const route = useRoute();
 const chatsStore = useChatsStore();
-const chatId = computed(() => route.params.id); // айді з URL
-const currentChat = ref();
+
+const chatId = computed(() => Number(route.params.id)); // айді з URL
+const currentChat = computed(() =>
+  chatsStore.chats.find((chat) => chat.chat_id === chatId.value)
+);
 const messages = computed(() => chatsStore.chatMessages[chatId.value]);
 const name = computed(() => useCookie("user"));
 const newMessage = ref("");
@@ -74,16 +137,49 @@ function scrollToBottom() {
 }
 const sendMessage = async () => {
   if (!newMessage.value) return;
-  await chatsStore.sendMessageToChat(chatId.value, newMessage.value);
+  const tempMessage = newMessage.value;
+  newMessage.value = "";
+  scrollToBottom();
+  const optimisticMessage = {
+    message_id:
+      chatsStore.chatMessages[chatId.value][
+        chatsStore.chatMessages[chatId.value].length - 1
+      ].message_id + 1,
+    chat_id: chatId.value,
+    content: tempMessage,
+    sender: {
+      avatar: null,
+      username: useCookie("user").value,
+    },
+    status: "pending",
+  };
 
+  chatsStore.chatMessages[chatId.value].push(optimisticMessage);
+
+  const realMessage = await chatsStore.sendMessageToChat(
+    chatId.value,
+    tempMessage
+  );
+  const index = chatsStore.chatMessages[chatId.value].findIndex(
+    (m) => m.message_id === optimisticMessage.message_id
+  );
+  if (index !== -1) {
+    chatsStore.chatMessages[chatId.value][index] = {
+      ...realMessage.data,
+      status: "sent",
+    };
+  }
   newMessage.value = "";
   scrollToBottom();
 };
 
 onMounted(async () => {
-  currentChat.value = chatId.value;
-  scrollToBottom();
+  if (!chatsStore.chats.length) {
+    await chatsStore.fetchChats();
+  }
+
   await chatsStore.getMessageFromChat(chatId.value);
+  scrollToBottom();
 });
 import { useEcho } from "@laravel/echo-vue";
 import axios from "axios";
@@ -125,11 +221,34 @@ configureEcho({
     };
   },
 });
-const { leaveChannel, leave, stopListening, listen } = useEcho(
+
+const deleteMessage = async (messageId) => {
+  const messages = chatsStore.chatMessages[chatId.value] || [];
+  const index = messages.findIndex((m) => m.message_id === messageId);
+
+  messages.splice(index, 1);
+  await chatsStore.deleteMessageFetch(messageId);
+};
+
+const messageSent = useEcho(`chat.${chatId.value}`, ".message.sent", (e) => {
+  const messages = chatsStore.chatMessages[chatId.value] || [];
+
+  // якщо такого message_id ще немає — пушимо
+  const exists = messages.some((m) => m.message_id === e.message_id);
+  if (exists || e.sender.username === useCookie("user").value) return;
+
+  messages.push(e);
+  scrollToBottom();
+});
+const messageDelete = useEcho(
   `chat.${chatId.value}`,
-  ".message.sent",
+  ".message.deleted",
   (e) => {
-    chatsStore.chatMessages[chatId.value].push(e);
+    const messages = chatsStore.chatMessages[chatId.value] || [];
+    const index = messages.findIndex((m) => m.message_id === e.message_id);
+
+    if (e.username === useCookie("user").value) return;
+    messages.splice(index, 1);
   }
 );
 </script>

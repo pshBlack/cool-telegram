@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import axios from "axios";
 import { ref } from "vue";
 import type { Chat } from "~/constants/interfaces";
+import { toast } from "vue-sonner";
 
 export const useChatsStore = defineStore("chats", () => {
   const chats = ref<Chat[]>([]);
@@ -16,14 +17,22 @@ export const useChatsStore = defineStore("chats", () => {
 
   const fetchChats = async (): Promise<void> => {
     try {
-      const { data } = await axios.get("http://localhost:8000/api/chats", {
-        headers: {
-          Accept: "application/json",
-          "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
-        },
-        withCredentials: true,
-      });
+      const { data, status } = await axios.get(
+        "http://localhost:8000/api/chats",
+        {
+          headers: {
+            Accept: "application/json",
+            "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
+          },
+          withCredentials: true,
+        }
+      );
       chats.value = data;
+      if (status === 401) {
+        toast.error("Unauthorized");
+        useCookie("user").value = "";
+        navigateTo("/login");
+      }
     } finally {
       loading.value = false;
     }
@@ -60,8 +69,26 @@ export const useChatsStore = defineStore("chats", () => {
         withCredentials: true,
       }
     );
-
+    await fetchChats();
     return data;
+  };
+
+  const deleteMessageFetch = async (messageId: number) => {
+    await callCookie();
+    const { data, status } = await axios.delete(
+      `http://localhost:8000/api/messages/${messageId}`,
+      {
+        headers: {
+          Accept: "application/json",
+          "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
+        },
+        withCredentials: true,
+      }
+    );
+    if (status === 200) {
+      toast.success("Message deleted");
+      console.log(data);
+    }
   };
 
   const getMessageFromChat = async (chatId: number) => {
@@ -71,9 +98,27 @@ export const useChatsStore = defineStore("chats", () => {
     );
     chatMessages[chatId] = data.map((msg: any) => ({
       ...msg,
-      me: msg.sender_id === Number(localStorage.getItem("user_id")), // позначимо свої
+      status: "sent", // позначимо свої
     }));
     return data;
+  };
+
+  const deleteChat = async (chatId: number) => {
+    await callCookie();
+    const { data, status } = await axios.delete(
+      `http://localhost:8000/api/chats/${chatId}`,
+      {
+        headers: {
+          Accept: "application/json",
+          "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
+        },
+        withCredentials: true,
+      }
+    );
+    if (status === 200) {
+      toast.success("Chat deleted");
+      console.log(data);
+    }
   };
   return {
     chats,
@@ -84,5 +129,7 @@ export const useChatsStore = defineStore("chats", () => {
     sendMessageToChat,
     getMessageFromChat,
     callCookie,
+    deleteMessageFetch,
+    deleteChat,
   };
 });

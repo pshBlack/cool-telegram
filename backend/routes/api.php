@@ -9,6 +9,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AllUsersChatController;
 use App\Http\Controllers\GroupChatController;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Illuminate\Support\Facades\Broadcast;
+
 
 // Гостьові роути (login/register) - тут Sanctum автоматично додає CSRF middleware
 Route::post('/register', [AuthController::class, 'register']);
@@ -38,8 +40,19 @@ Route::middleware([EnsureFrontendRequestsAreStateful::class,'auth:sanctum'] )->g
     Route::get('/chats/{chatId}/messages', [MessageController::class, 'getMessages']);
     Route::post('/messages/{messageId}/read', [MessageController::class, 'markAsRead']);
     Route::delete('/messages/{messageId}', [MessageController::class, 'deleteMessage']);
+    
+    Route::post('/messages/{messageId}', [MessageController::class, 'editMessage']);
    
     Route::get('/users/search/{username}', [UserController::class, 'search']);
+    
+    //avatar upload 
+    Route::post('/users/avatar', [UserController::class, 'uploadAvatar']);
+    // update bio
+    Route::post('/users/bio', [UserController::class, 'updateBio']);
+
+
+
+
     
     // Broadcast routes
     Broadcast::routes(['middleware' => ['auth:sanctum',EnsureFrontendRequestsAreStateful::class]]);
