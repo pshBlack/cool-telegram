@@ -16,14 +16,16 @@ class MessageDeleted   implements ShouldBroadcast
 
     public $messageId;
     public $chatId;
-
+    public $username;
     /**
      * Create a new event instance.
      */
-    public function __construct($messageId, $chatId)
+    public function __construct($messageId, $chatId, $username)
     {
         $this->messageId = $messageId;
         $this->chatId = $chatId;
+        $this->username = $username;
+        
     }
 
     public function broadcastOn()
@@ -40,6 +42,7 @@ class MessageDeleted   implements ShouldBroadcast
         return [
             'message_id' => $this->messageId,
             'chat_id' => $this->chatId,
+            'username' => $this->username
         ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Chat;
+use Illuminate\Support\Facades\DB;
 
 class ChatController extends Controller
 {
@@ -74,9 +75,11 @@ class ChatController extends Controller
             return response()->json(['message' => 'You are not part of this chat'], 403);
         }
 
+         DB::transaction(function () use ($chat) {
         $chat->messages()->delete();
         $chat->users()->detach();
         $chat->delete();
+    });
 
         return response()->json(['message' => 'Chat deleted successfully']);
     }

@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { useUserStore } from "~/stores/userStore";
+import { useUserStore } from "~/store/userStore";
 const userStore = useUserStore();
 const formSchema = toTypedSchema(
   z.object({
