@@ -52,5 +52,5 @@ Route::middleware([EnsureFrontendRequestsAreStateful::class,'auth:sanctum'] )->g
 
     // Broadcast routes
     Broadcast::routes(['middleware' => ['auth:sanctum',EnsureFrontendRequestsAreStateful::class]]);
-    
+        
 });
