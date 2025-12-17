@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
-import { useEcho } from "@laravel/echo-vue";
-import { configureEcho } from "@laravel/echo-vue";
 </script>
 
 <template>

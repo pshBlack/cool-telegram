@@ -15,7 +15,7 @@ export default defineNuxtConfig({
     plugins: [tailwindcss()],
   },
 
-  modules: ["@nuxt/fonts", "shadcn-nuxt"],
+  modules: ["@nuxt/fonts", "shadcn-nuxt", "z-vue-scan-nuxt-module"],
   shadcn: {
     /**
      * Prefix for all the imported component
@@ -26,5 +26,10 @@ export default defineNuxtConfig({
      * @default "./app/components/ui"
      */
     componentDir: "./app/components/ui",
+  },
+  vueScan: {
+    // options
+    enable: true,
+    hideComponentName: false,
   },
 });

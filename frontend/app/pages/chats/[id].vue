@@ -99,6 +99,7 @@ import { UserPlus, Phone, Settings } from "lucide-vue-next";
 import { useChatsStore } from "~/store/chatsStore";
 import { configureEcho } from "@laravel/echo-vue";
 import { Trash2, InfoIcon, Check } from "lucide-vue-next";
+import { v4 as uuidv4 } from "uuid";
 import {
   ContextMenu,
   ContextMenuCheckboxItem,
@@ -118,7 +119,7 @@ import { useDateFormat } from "@vueuse/core";
 const route = useRoute();
 const chatsStore = useChatsStore();
 
-const chatId = computed(() => Number(route.params.id)); // айді з URL
+const chatId = computed(() => route.params.id); // айді з URL
 const currentChat = computed(() =>
   chatsStore.chats.find((chat) => chat.chat_id === chatId.value)
 );
@@ -141,10 +142,7 @@ const sendMessage = async () => {
   newMessage.value = "";
   scrollToBottom();
   const optimisticMessage = {
-    message_id:
-      chatsStore.chatMessages[chatId.value][
-        chatsStore.chatMessages[chatId.value].length - 1
-      ].message_id + 1,
+    message_id: uuidv4(),
     chat_id: chatId.value,
     content: tempMessage,
     sender: {

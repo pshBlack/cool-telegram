@@ -1,17 +1,15 @@
 export interface User {
-  user: {
-    user_id: number;
-    username: string;
-    first_name: string | null;
-    last_name: string | null;
-    email: string;
-    google_id: number | null;
-    avatar_url: string | null;
-    bio: string | null;
-    created_at: Date;
-    last_seen_at: Date;
-    updated_at: Date;
-  };
+  user_id: number;
+  username: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+  google_id: number | null;
+  avatar_url: string | null;
+  bio: string | null;
+  created_at: Date;
+  last_seen_at: Date;
+  updated_at: Date;
 }
 export interface Message {
   message_id: number;

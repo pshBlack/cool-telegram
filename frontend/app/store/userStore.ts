@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import axios from "axios";
 import { ref } from "vue";
 import { toast } from "vue-sonner";
-
+import type { User } from "~/constants/interfaces";
 interface loginSchema {
   email?: string;
   password?: string;
@@ -15,7 +15,7 @@ interface registerSchema {
 
 export const useUserStore = defineStore("user", () => {
   const loading = ref(true);
-
+  const user = ref<User>();
   const fetchUser = async (): Promise<void> => {
     try {
       const { data, status } = await axios.get(
@@ -30,9 +30,9 @@ export const useUserStore = defineStore("user", () => {
       );
 
       if (status === 200) {
-        const user = useCookie("user");
-        user.value = data.user.username;
-
+        const userCookie = useCookie("user");
+        userCookie.value = data.user.username;
+        user.value = data.user;
         navigateTo("/chats");
       }
     } catch (error: any) {
@@ -67,9 +67,9 @@ export const useUserStore = defineStore("user", () => {
       if (response.status === 200) {
         toast.success("Registration successful");
         const token = useCookie("token");
-        const user = useCookie("user");
+        const userCookie = useCookie("user");
         token.value = response.data.token;
-        user.value = response.data.user.username;
+        userCookie.value = response.data.user.username;
         await navigateTo("/chats");
       } else {
         toast.error("Registration failed");
@@ -97,8 +97,8 @@ export const useUserStore = defineStore("user", () => {
       );
       if (response.status === 200) {
         toast.success("Login successful");
-        const user = useCookie("user");
-        user.value = response.data.user.username;
+        const userCookie = useCookie("user");
+        userCookie.value = response.data.user.username;
         console.log(response.data);
         await navigateTo("/chats");
       } else {
@@ -120,5 +120,5 @@ export const useUserStore = defineStore("user", () => {
     await axios.post("http://localhost:8000/api/logout");
   };
 
-  return { loading, fetchUser, fetchRegister, fetchLogin };
+  return { loading, fetchUser, fetchRegister, fetchLogin, user };
 });

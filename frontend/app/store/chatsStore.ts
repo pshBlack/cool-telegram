@@ -117,7 +117,7 @@ export const useChatsStore = defineStore("chats", () => {
     );
     if (status === 200) {
       toast.success("Chat deleted");
-      console.log(data);
+      fetchChats();
     }
   };
   return {

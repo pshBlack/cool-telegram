@@ -3,11 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Chat;
+use App\Models\User;
+use Illuminate\Support\Str;
+
 
 class Message extends Model
 {
     protected $primaryKey = 'message_id';
     public $timestamps = false; 
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
         'chat_id', 'sender_id', 'content', 'sent_at', 'is_read'
@@ -17,11 +23,12 @@ class Message extends Model
         'sent_at' => 'datetime',
     ];
 
-    protected static function boot()
+    protected static function booted()
     {
-        parent::boot();
-
-        static::creating(function ($message) {
+       static::creating(function ($message) {
+            if (!$message->message_id) {
+                $message->message_id = (string) Str::uuid();
+            }
             if (!$message->sent_at) {
                 $message->sent_at = now();
             }

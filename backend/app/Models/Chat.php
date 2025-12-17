@@ -3,7 +3,7 @@
 namespace App\Models;
 use App\Models\User;
 use App\Models\Message;
-
+use Illuminate\Support\Str;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,7 +11,8 @@ class Chat extends Model
 {
 
      protected $primaryKey = 'chat_id';
-            protected $keyType = 'int'; 
+            public $incrementing = false;  
+            protected $keyType = 'string';
             protected $appends = ['display_name'];
 
 
@@ -21,6 +22,19 @@ class Chat extends Model
         'chat_avatar_url',
         'created_by',
     ];
+
+
+
+    
+    protected static function booted()
+    {
+        static::creating(function ($chat) {
+            if (!$chat->chat_id) {
+                $chat->chat_id = (string) Str::uuid();
+            }
+        });
+    }
+    
 
      public function getDisplayNameAttribute()
     {

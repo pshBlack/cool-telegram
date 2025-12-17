@@ -18,53 +18,45 @@
     </div>
 
     <ul
-      v-if="filteredChats ? filteredChats.length > 0 : false"
+      v-if="filteredChats && filteredChats.length > 0"
       class="flex flex-col bg-[#4a444c] mt-4 rounded-md py-2 shadow-xl overflow-y-auto"
     >
-      <ContextMenu asChild>
-        <ContextMenuTrigger>
-          <li v-for="chat in filteredChats" :key="chat.chat_id" class="">
-            <ContextMenuContent>
-              <ContextMenuItem @click="showCharId(chat.chat_id)">
-                <InfoIcon class="mr-2" />Chat ID</ContextMenuItem
-              >
-              <ContextMenuItem @click="chatStore.deleteChat(chat.chat_id)">
-                <Trash class="mr-2" />Delete Chat</ContextMenuItem
-              >
-            </ContextMenuContent>
+      <li v-for="chat in filteredChats" :key="chat.chat_id">
+        <ContextMenu>
+          <ContextMenuTrigger asChild>
             <NuxtLink
               :to="`/chats/${chat.chat_id}`"
               class="flex items-center justify-between p-3 hover:bg-[#3b363e] transition"
             >
               <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-full bg-[#3a1016]"></div>
-
                 <div class="flex flex-col">
-                  <span class="text-white">
-                    {{ chat.otherUser.username }}
-                  </span>
-                  <span class="text-(--muted-foreground) text-sm truncate w-32">
+                  <span class="text-white">{{ chat.otherUser.username }}</span>
+                  <span class="text-gray-400 text-sm truncate w-32">
                     {{ chat.messages[0]?.content }}
                   </span>
                 </div>
               </div>
               <div v-if="chat.messages.length > 0">
-                <span class="text-xs text-(--muted-foreground) ml-2">{{
-                  useDateFormat(chat.messages[0]?.sent_at, "HH:mm")
-                }}</span>
+                <span class="text-xs text-gray-400 ml-2">
+                  {{ useDateFormat(chat.messages[0]?.sent_at, "HH:mm") }}
+                </span>
               </div>
-              <!-- <div
-            v-if="chat.messages.is_read > 0"
-            class="bg-red-800 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full"
-          >
-            {{ chat.unread }}
-          </div>
-        -->
             </NuxtLink>
-          </li>
-        </ContextMenuTrigger>
-      </ContextMenu>
+          </ContextMenuTrigger>
+
+          <ContextMenuContent>
+            <ContextMenuItem @click="showCharId(chat.chat_id)">
+              <InfoIcon class="mr-2" />Chat ID
+            </ContextMenuItem>
+            <ContextMenuItem @click="chatStore.deleteChat(chat.chat_id)">
+              <Trash class="mr-2" />Delete Chat
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
+      </li>
     </ul>
+
     <ul
       v-else-if="users.length > 0"
       class="flex flex-col bg-[#4a444c] mt-4 rounded-md py-2 shadow-xl"
@@ -96,14 +88,9 @@
         </NuxtLink>
       </li>
     </ul>
-
-    <Button
-      type="submit"
-      class="button w-1/2 text-xl mt-4 flex justify-center self-center"
-      size="lg"
-      @click="logout"
-      >Logout >
-    </Button>
+    <div class="mt-auto">
+      <Profile />
+    </div>
   </aside>
 </template>
 <script lang="ts" setup>
@@ -132,10 +119,10 @@ import {
 const users = ref<any[]>([]);
 const text = ref("");
 
-const logout = async () => {
-  await axios.post("http://localhost:8000/api/logout");
-  await navigateTo("/login");
-};
+// const logout = async () => {
+//   await axios.post("http://localhost:8000/api/logout");
+//   await navigateTo("/login");
+// };
 
 const callCookie = async () => {
   await axios.get("http://localhost:8000/sanctum/csrf-cookie", {
@@ -160,7 +147,7 @@ const findUser = useDebounceFn(async (newValue) => {
     }
   );
   users.value = data;
-}, 300);
+}, 200);
 const chatStore = useChatsStore();
 watch(text, async (newValue) => {
   findUser(newValue);
