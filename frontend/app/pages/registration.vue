@@ -12,8 +12,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "vue-sonner";
 
+import { useUserStore } from "~/store/userStore";
+const userStore = useUserStore();
 const formSchema = toTypedSchema(
   z.object({
     username: z.string().min(2).max(30),
@@ -27,27 +28,7 @@ const form = useForm({
 });
 
 const onSubmit = form.handleSubmit(async (values) => {
-  try {
-    const response = await fetch("http://localhost:8000/api/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(values),
-    });
-    const data = await response.json();
-    if (response.ok) {
-      toast.success("Registration successful");
-
-      localStorage.setItem("token", data.token);
-      await navigateTo("/chats");
-    } else {
-      toast.error("Registration failed");
-    }
-  } catch (error) {
-    console.error("Error:", error);
-  }
+  await userStore.fetchRegister(values);
 });
 </script>
 

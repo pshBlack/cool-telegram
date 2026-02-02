@@ -9,15 +9,14 @@
 </template>
 
 <script lang="ts" setup>
-import { useUserStore } from "~/stores/userStore";
+import { useUserStore } from "~/store/userStore";
+import { useChatsStore } from "~/store/chatsStore";
+
+const chatStore = useChatsStore();
 const userStore = useUserStore();
 
 onMounted(async () => {
-  const token = localStorage.getItem("token");
-  await userStore.fetchUser(token as string);
-});
-
-definePageMeta({
-  middleware: (to, from) => {},
+  await userStore.fetchUser();
+  await chatStore.fetchChats();
 });
 </script>

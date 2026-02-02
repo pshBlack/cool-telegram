@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="w-1/4 p-4 bg-[#312c32] overflow-y-auto rounded-2xl my-4 ml-4 shadow-xl flex flex-col"
+    class="w-1/4 p-4 bg-[#312c32] rounded-2xl my-4 ml-4 shadow-xl flex flex-col"
   >
     <div class="relative w-full max-w-sm items-center">
       <span
@@ -19,32 +19,51 @@
 
     <ul
       v-if="filteredChats ? filteredChats.length > 0 : false"
-      class="flex flex-col bg-[#4a444c] mt-4 rounded-md py-2 shadow-xl"
+      class="flex flex-col bg-[#4a444c] mt-4 rounded-md py-2 shadow-xl overflow-y-auto"
     >
-      <li v-for="chat in filteredChats" :key="chat.chat_id" class="">
-        <NuxtLink
-          :to="`/chats/${chat.chat_id}`"
-          class="flex items-center justify-between p-3 hover:bg-[#3b363e] transition"
-        >
-          <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-full bg-[#3a1016]"></div>
+      <ContextMenu asChild>
+        <ContextMenuTrigger>
+          <li v-for="chat in filteredChats" :key="chat.chat_id" class="">
+            <ContextMenuContent>
+              <ContextMenuItem @click="showCharId(chat.chat_id)">
+                <InfoIcon class="mr-2" />Chat ID</ContextMenuItem
+              >
+              <ContextMenuItem @click="chatStore.deleteChat(chat.chat_id)">
+                <Trash class="mr-2" />Delete Chat</ContextMenuItem
+              >
+            </ContextMenuContent>
+            <NuxtLink
+              :to="`/chats/${chat.chat_id}`"
+              class="flex items-center justify-between p-3 hover:bg-[#3b363e] transition"
+            >
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-[#3a1016]"></div>
 
-            <div class="flex flex-col">
-              <span class="text-white font-semibold">
-                {{ chat.otherUser.username }}
-              </span>
-              <span class="text-gray-400 text-sm truncate w-32"> </span>
-            </div>
-          </div>
-
-          <div
-            v-if="chat.unread > 0"
+                <div class="flex flex-col">
+                  <span class="text-white">
+                    {{ chat.otherUser.username }}
+                  </span>
+                  <span class="text-(--muted-foreground) text-sm truncate w-32">
+                    {{ chat.messages[0]?.content }}
+                  </span>
+                </div>
+              </div>
+              <div v-if="chat.messages.length > 0">
+                <span class="text-xs text-(--muted-foreground) ml-2">{{
+                  useDateFormat(chat.messages[0]?.sent_at, "HH:mm")
+                }}</span>
+              </div>
+              <!-- <div
+            v-if="chat.messages.is_read > 0"
             class="bg-red-800 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full"
           >
             {{ chat.unread }}
           </div>
-        </NuxtLink>
-      </li>
+        -->
+            </NuxtLink>
+          </li>
+        </ContextMenuTrigger>
+      </ContextMenu>
     </ul>
     <ul
       v-else-if="users.length > 0"
@@ -80,7 +99,7 @@
 
     <Button
       type="submit"
-      class="button w-1/2 text-xl mt-auto flex justify-center self-center"
+      class="button w-1/2 text-xl mt-4 flex justify-center self-center"
       size="lg"
       @click="logout"
       >Logout >
@@ -89,18 +108,39 @@
 </template>
 <script lang="ts" setup>
 import { LogOut } from "lucide-vue-next";
-import { Search } from "lucide-vue-next";
+import { Search, InfoIcon, Trash } from "lucide-vue-next";
 import axios from "axios";
 import { useDebounceFn } from "@vueuse/core";
 import Button from "../ui/button/Button.vue";
-import { useChatsStore } from "~/stores/chatsStore";
+import { useChatsStore } from "~/store/chatsStore";
+import { useDateFormat } from "@vueuse/core";
+import {
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuSeparator,
+  ContextMenuShortcut,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 const users = ref<any[]>([]);
 const text = ref("");
 
 const logout = async () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("username");
+  await axios.post("http://localhost:8000/api/logout");
   await navigateTo("/login");
+};
+
+const callCookie = async () => {
+  await axios.get("http://localhost:8000/sanctum/csrf-cookie", {
+    withCredentials: true,
+  });
 };
 
 const findUser = useDebounceFn(async (newValue) => {
@@ -108,33 +148,33 @@ const findUser = useDebounceFn(async (newValue) => {
     users.value = [];
     return;
   }
-
+  callCookie();
   const { data } = await axios.get(
     `http://localhost:8000/api/users/search/${newValue}`,
     {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Accept: "application/json",
+        "X-XSRF-TOKEN": `${useCookie("XSRF-TOKEN").value}`,
       },
+      withCredentials: true,
     }
   );
   users.value = data;
 }, 300);
 const chatStore = useChatsStore();
-
 watch(text, async (newValue) => {
   findUser(newValue);
   users.value = [];
 });
-onMounted(async () => {
-  await chatStore.fetchChats();
-});
-
+const showCharId = (chatId: number) => {
+  console.log(chatId);
+};
 const filteredChats = computed(() =>
   chatStore.chats
     .map((chat) => {
       // знаходимо іншого користувача
-      const otherUser = chat.users.find(
-        (u: any) => u.username !== localStorage.getItem("user")
+      const otherUser: any = chat.users.find(
+        (u: any) => u.username !== useCookie("user").value
       );
       return {
         ...chat,
@@ -145,4 +185,5 @@ const filteredChats = computed(() =>
       chat.otherUser.username.toLowerCase().includes(text.value.toLowerCase())
     )
 );
+onMounted(async () => {});
 </script>

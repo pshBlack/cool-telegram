@@ -9,38 +9,39 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\User;
 
-class SendMessage implements ShouldBroadcast
+class MessageDeleted   implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
- 
 
-
+    public $messageId;
     public $chatId;
-    public $content;
-    public $user;
+
     /**
      * Create a new event instance.
      */
-    public function __construct($chatId, $content, User $user)
+    public function __construct($messageId, $chatId)
     {
+        $this->messageId = $messageId;
         $this->chatId = $chatId;
-        $this->content = $content;
-        $this->user = $user;
+        
     }
 
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
-     */
     public function broadcastOn()
     {
-        return new PrivateChannel('chat.' . $this->chatId);
+        return  new PrivateChannel('chat.' . $this->chatId);
     }
-    public function broadcastAs()
+     public function broadcastAs()
     {
-        return 'message.send';
+        return 'message.deleted';
+    }
+
+    public function broadcastWith()
+    {
+        return [
+            'message_id' => $this->messageId,
+            'chat_id' => $this->chatId,
+            'username' => auth()->user()->username
+        ];
     }
 }

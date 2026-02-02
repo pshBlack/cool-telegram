@@ -18,7 +18,7 @@
   --secondary: oklch(0.97 0.001 106.424);
   --secondary-foreground: oklch(0.216 0.006 56.043);
   --muted: oklch(0.97 0.001 106.424);
-  --muted-foreground: oklch(0.553 0.013 58.071);
+  --muted-foreground: #919191;
   --accent: oklch(0.97 0.001 106.424);
   --accent-foreground: oklch(0.216 0.006 56.043);
   --destructive: oklch(0.577 0.245 27.325);
@@ -56,6 +56,21 @@ body {
 .button:active {
   transform: translateY(6px);
   box-shadow: none;
+}
+
+.check-enter-active,
+.check-leave-active {
+  transition: opacity 0.5s, transform 0.5s;
+}
+.check-enter-from,
+.check-leave-to {
+  opacity: 0.5;
+  transform: translateX(4px);
+}
+.check-enter-to,
+.check-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .sidebar ul {
@@ -141,5 +156,14 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }

@@ -16,4 +16,4 @@ Broadcast::channel('chat.{chatId}', function ($user, $chatId) {
         ->exists();
         
 });
-Broadcast::routes(['middleware' => ['auth:sanctum']]); // auth:api → для Bearer токена
+ // auth:api → для Bearer токена

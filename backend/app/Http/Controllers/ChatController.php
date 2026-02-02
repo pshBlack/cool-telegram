@@ -13,7 +13,7 @@ class ChatController extends Controller
         $validated = $request->validate([
             'identifier' => 'required|string', // email or username
         ]);
-
+        
         $authUser = $request->user();
 
         $otherUser = User::where('email', $validated['identifier'])
@@ -43,6 +43,7 @@ class ChatController extends Controller
 
         // create new chat
         $chat = Chat::create([
+
             'chat_type' => 'one_to_one',
             'created_by' => $authUser->user_id,
         ]);
@@ -58,6 +59,27 @@ class ChatController extends Controller
             'chat' => $chat->load('users')
         ], 201);
     }
+
+       // delete chat
+    public function deleteChat(Request $request, $chatId)
+    {
+        $authUser = $request->user();
+        $chat = Chat::with('users', 'messages')->find($chatId);
+        
+       if (!$chat || $chat->chat_type !== 'one_to_one') {
+            return response()->json(['message' => 'Chat not found'], 404);
+        }
+
+        if (!$chat->users->contains($authUser->user_id)) {
+            return response()->json(['message' => 'You are not part of this chat'], 403);
+        }
+
+        $chat->messages()->delete();
+        $chat->users()->detach();
+        $chat->delete();
+
+        return response()->json(['message' => 'Chat deleted successfully']);
+    }
      
     public function getUserChats(Request $request)
 {
@@ -67,7 +89,18 @@ class ChatController extends Controller
         ->with(['users:user_id,username,email,avatar_url', 'messages' => function ($q) {
             $q->latest('sent_at')->limit(1); // last message
         }])
-        ->get();
+        ->get()
+        ->map(function ($chat) use ($authUser) {
+            // get display name
+            if ($chat->chat_type === 'one_to_one') {
+                $otherUser = $chat->users->firstWhere('user_id', '!=', $authUser->user_id);
+                $chat->display_name = $otherUser ? $otherUser->username : 'Unknown';
+            } else {
+                $chat->display_name = $chat->name ?? 'Group Chat';
+            }
+            return $chat;
+        });
+
 
     return response()->json($chats);
 }

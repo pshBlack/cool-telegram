@@ -2,28 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { useEcho } from "@laravel/echo-vue";
 import { configureEcho } from "@laravel/echo-vue";
-
-configureEcho({
-  broadcaster: "reverb",
-  key: import.meta.env.VITE_REVERB_APP_KEY,
-  cluster: "mt1",
-  wsHost: import.meta.env.VITE_REVERB_HOST,
-  wsPort: Number(import.meta.env.VITE_REVERB_PORT),
-  wssPort: Number(import.meta.env.VITE_REVERB_PORT),
-  forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? "https") === "https",
-  encrypted: true,
-  enabledTransports: ["ws", "wss"],
-  authEndpoint: "http://localhost:8000/broadcasting/auth",
-  auth: {
-    headers: {
-      Authorization: `Bearer 27|k7attyFhfw1TEwwOACWqQf4JLY0SMGhjuyBMtW0v013c789e`,
-    },
-  },
-});
-
-useEcho("chat.20", "MessageSent", (e) => {
-  console.log(e);
-});
 </script>
 
 <template>
