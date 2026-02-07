@@ -1,0 +1,151 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Message;
+use App\Models\Chat;
+use App\Events\MessageSent;
+use App\Events\MessageEdited;
+use App\Events\MessageDeleted;
+
+
+class MessageController extends Controller
+{
+
+    public function sendMessage(Request $request, $chatId)
+    {
+        $validated = $request->validate([
+            'content' => 'required|string',
+        ]);
+
+        $authUser = $request->user();
+
+        // validate chat membership
+        $chat = Chat::where('chat_id', $chatId)
+            ->whereHas('users', fn($q) => $q->where('chat_participants.user_id', $authUser->user_id))
+            ->first();
+
+        if (!$chat) {
+            return response()->json(['message' => 'You are not in this chat'], 403);
+        }
+
+        $message = Message::create([
+            'chat_id' => $chat->chat_id,
+            'sender_id' => $authUser->user_id,
+            'content' => $validated['content'],
+            'sent_at' => now(),
+            'is_read' => false,
+        ]);
+        event(new MessageSent($message));
+
+        return response()->json([
+            'message' => 'Message sent',
+            'data' => $message->load('sender')
+        ], 201);
+
+        //event(new SendMessage($chatId, $validated['content'], $authUser));
+        
+
+    }
+    
+    public function deleteMessage(Request $request, $messageId)
+    {
+        $authUser = $request->user();
+
+        $message = Message::find($messageId);
+
+       if (!$message) {
+        return response()->json(['message' => 'Message not found'], 404);
+    }
+     // validate sender message
+    if ($message->sender_id !== $authUser->user_id) {
+        return response()->json(['message' => 'You can only delete your own messages'], 403);
+    }
+
+    $message->delete();
+
+    event(new MessageDeleted($messageId, $message->chat_id));
+
+    return response()->json(['message' => 'Message deleted']);
+
+    }
+
+
+
+    // history of messages in chat
+    public function getMessages(Request $request, $chatId)
+    {
+        $authUser = $request->user();
+
+        $chat = Chat::where('chat_id', $chatId)
+            ->whereHas('users', fn($q) => $q->where('chat_participants.user_id', $authUser->user_id))
+            ->first();
+
+        if (!$chat) {
+            return response()->json(['message' => 'You are not in this chat'], 403);
+        }
+
+        $messages = Message::where('chat_id', $chat->chat_id)
+            ->orderBy('sent_at', 'asc')
+            ->with('sender:user_id,username,avatar_url')
+            ->get();
+            //->paginate(50); // це типу зробити на фронтенду інфініті скрол в гору щоб підгружались повідомлення по 50
+
+        return response()->json($messages);
+    }
+
+    public function editMessage(Request $request, $messageId)
+    {
+        $validated = $request->validate([
+            'content' => 'required|string|max:5000',
+        ]);
+
+        $authUser = $request->user();
+
+        $message = Message::find($messageId);
+
+        if (!$message) {
+            return response()->json(['message' => 'Message not found'], 404);
+        }
+
+        // validate sender message
+        
+        if ($message->sender_id !== $authUser->user_id) {
+            return response()->json(['message' => 'You can only edit your own messages'], 403);
+        }
+
+        $message->content = $validated['content'];
+        $message->save();
+
+        event(new MessageEdited($message));
+
+        return response()->json([
+            'message' => 'Message edited',
+            'data' => $message->load('sender')
+        ]);
+    }
+
+    // mark message as read
+    public function markAsRead(Request $request, $messageId)
+    {
+        $authUser = $request->user();
+
+        $message = Message::find($messageId);
+
+        if (!$message) {
+            return response()->json(['message' => 'Message not found'], 404);
+        }
+
+        // validate chat membership
+        $chat = $message->chat;
+        if (!$chat->users()->where('users.user_id', $authUser->user_id)->exists()) {
+            return response()->json(['message' => 'You are not in this chat'], 403);
+        }
+
+        $message->is_read = true;
+        $message->save();
+
+        return response()->json(['message' => 'Marked as read']);
+    }
+}

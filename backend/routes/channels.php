@@ -1,19 +1,58 @@
 <?php
 
-use Illuminate\Support\Facades\Broadcast;
 use App\Models\Chat;
-use App\Events\MessageSent;
-use App\Http\Controllers\MessageController;
+use App\Models\User;
+use Illuminate\Support\Facades\Broadcast;
 
+/*
+|--------------------------------------------------------------------------
+| Broadcast Channels
+|--------------------------------------------------------------------------
+|
+| Here you may register all of the event broadcasting channels that your
+| application supports. The given channel authorization callbacks are
+| used to check if an authenticated user can listen to the channel.
+|
+*/
 
-Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
-    return (int) $user->user_id === (int) $id;
+// User's personal channel
+Broadcast::channel('user.{userId}', function (User $user, string $userId) {
+    return $user->user_id === $userId;
 });
 
-Broadcast::channel('chat.{chatId}', function ($user, $chatId) {
-    return Chat::where('chat_id', $chatId)
-        ->whereHas('users', fn($q) => $q->where('chat_participants.user_id', $user->user_id))
+// Chat channel - only participants can listen
+Broadcast::channel('chat.{chatId}', function (User $user, string $chatId) {
+    $chat = Chat::find($chatId);
+    
+    if (!$chat) {
+        return false;
+    }
+    
+    // Check if user is a participant in this chat
+    return $chat->participants()
+        ->where('user_id', $user->user_id)
         ->exists();
-        
 });
- // auth:api → для Bearer токена
+
+// Online presence channel
+Broadcast::channel('online', function (User $user) {
+    return [
+        'id' => $user->user_id,
+        'name' => $user->full_name,
+        'username' => $user->username,
+        'avatar' => $user->avatar,
+    ];
+});
+
+// Typing indicator channel for specific chat
+Broadcast::channel('typing.{chatId}', function (User $user, string $chatId) {
+    $chat = Chat::find($chatId);
+    
+    if (!$chat) {
+        return false;
+    }
+    
+    return $chat->participants()
+        ->where('user_id', $user->user_id)
+        ->exists();
+});

@@ -1,60 +1,94 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\AllUsersChatController;
-use App\Http\Controllers\GroupChatController;
-use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
-use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Auth Routes
+|--------------------------------------------------------------------------
+*/
 
-// Гостьові роути (login/register) - тут Sanctum автоматично додає CSRF middleware
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+// Public routes
+Route::prefix('auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    
+    // Social authentication
+    Route::get('/google/redirect', [AuthController::class, 'redirectToGoogle']);
+    Route::get('/google/callback', [AuthController::class, 'handleGoogleCallback']);
+});
 
-// Захищені роути
-Route::middleware([EnsureFrontendRequestsAreStateful::class,'auth:sanctum'] )->group(function () {
-    // auth
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', function (Request $request) {
-        return response()->json([
-            'user' => $request->user()->makeHidden(['password_hash'])
-        ]);
+/*
+|--------------------------------------------------------------------------
+| Protected Routes (Require Sanctum Authentication)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->group(function () {
+    
+    // Auth routes
+    Route::prefix('auth')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::post('/logout-all', [AuthController::class, 'logoutAll']);
+        Route::get('/user', [AuthController::class, 'user']);
+        
+        // Social account management
+        Route::post('/google/link', [AuthController::class, 'linkGoogleAccount']);
+        Route::post('/google/unlink', [AuthController::class, 'unlinkGoogleAccount']);
+        
     });
-    
-    // chats
-    Route::post('/chats', [ChatController::class, 'createChat']);
-    Route::get('/chats', [ChatController::class, 'getUserChats']);
-    Route::post('/chats/all-users', [AllUsersChatController::class, 'create']);
-    Route::post('/group-chats', [GroupChatController::class, 'createGroupChat']);
-    Route::get('/group-chats/{chatId}/messages', [GroupChatController::class, 'getGroupChatMessages']);
-    Route::delete('/chats/{chatId}', [ChatController::class, 'deleteChat']);
-    Route::delete('/group-chats/{chatId}', [GroupChatController::class, 'deleteGroupChat']);
-    
-    // messages
-    Route::post('/chats/{chatId}/messages', [MessageController::class, 'sendMessage']);
-    Route::get('/chats/{chatId}/messages', [MessageController::class, 'getMessages']);
-    Route::post('/messages/{messageId}/read', [MessageController::class, 'markAsRead']);
-    Route::delete('/messages/{messageId}', [MessageController::class, 'deleteMessage']);
-    
-    Route::post('/messages/{messageId}', [MessageController::class, 'editMessage']);
-   
-    Route::get('/users/search/{username}', [UserController::class, 'search']);
-    
-    //avatar upload 
-    Route::post('/users/avatar', [UserController::class, 'uploadAvatar']);
-    // update bio
-    Route::post('/users/bio', [UserController::class, 'updateBio']);
 
+    // User routes
+    Route::prefix('users')->group(function () {
+        Route::get('/me', [UserController::class, 'me']);
+        Route::put('/me', [UserController::class, 'update']);
+        Route::post('/me/avatar', [UserController::class, 'updateAvatar']);
+        Route::delete('/me/avatar', [UserController::class, 'deleteAvatar']);
+        Route::post('/me/last-seen', [UserController::class, 'updateLastSeen']);
+        
+        Route::get('/', [UserController::class, 'index']);
+        Route::get('/{user}', [UserController::class, 'show']);
+        Route::get('/search', [UserController::class, 'search']);
+    });
 
+    // Chat routes
+    Route::prefix('chats')->group(function () {
+        Route::get('/', [ChatController::class, 'index']);
+        Route::post('/', [ChatController::class, 'store']);
+        Route::get('/{chat}', [ChatController::class, 'show']);
+        Route::put('/{chat}', [ChatController::class, 'update']);
+        Route::delete('/{chat}', [ChatController::class, 'destroy']);
+        
+        // Chat avatar
+        Route::post('/{chat}/avatar', [ChatController::class, 'updateAvatar']);
+        Route::delete('/{chat}/avatar', [ChatController::class, 'deleteAvatar']);
+        
+        // Chat participants
+        Route::get('/{chat}/participants', [ChatController::class, 'participants']);
+        Route::post('/{chat}/participants', [ChatController::class, 'addParticipant']);
+        Route::delete('/{chat}/participants/{user}', [ChatController::class, 'removeParticipant']);
+        Route::put('/{chat}/participants/{user}/role', [ChatController::class, 'updateParticipantRole']);
+        
+        // Mark messages as read
+        Route::post('/{chat}/read', [ChatController::class, 'markAsRead']);
 
-
-    
-    // Broadcast routes
-    Broadcast::routes(['middleware' => ['auth:sanctum',EnsureFrontendRequestsAreStateful::class]]);
-    
+        // Messages in chat
+        Route::prefix('{chat}/messages')->group(function () {
+            Route::get('/', [MessageController::class, 'index']);
+            Route::post('/', [MessageController::class, 'store']);
+            Route::get('/{message}', [MessageController::class, 'show']);
+            Route::put('/{message}', [MessageController::class, 'update']);
+            Route::delete('/{message}', [MessageController::class, 'destroy']);
+            
+            // Mark message as read
+            Route::post('/{message}/read', [MessageController::class, 'markAsRead']);
+            
+            // Typing indicator
+            Route::post('/typing', [MessageController::class, 'typing']);
+        });
+    });
 });

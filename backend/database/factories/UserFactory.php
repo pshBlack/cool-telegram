@@ -5,10 +5,8 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use App\Models\User;
 
-
-/** 
+/**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
  */
 class UserFactory extends Factory
@@ -23,23 +21,14 @@ class UserFactory extends Factory
      *
      * @return array<string, mixed>
      */
-
-    protected $model = User::class;
-    
-    public function definition()
+    public function definition(): array
     {
         return [
-            'username' => $this->faker->unique()->userName,
-            'first_name' => $this->faker->firstName,
-            'last_name' => $this->faker->lastName,
-            'email' => $this->faker->unique()->safeEmail,
-            'password_hash' => bcrypt('password123'), 
-            'google_id' => null,
-            'avatar_url' => $this->faker->imageUrl(100, 100, 'people'),
-            'bio' => $this->faker->sentence,
-            'created_at' => now(),
-            'updated_at' => now(),
-            'last_seen_at' => now(),
+            'name' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => now(),
+            'password' => static::$password ??= Hash::make('password'),
+            'remember_token' => Str::random(10),
         ];
     }
 

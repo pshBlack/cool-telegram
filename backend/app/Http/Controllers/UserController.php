@@ -2,70 +2,98 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
-use Illuminate\Support\Facades\Storage;
-
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function search($username)
+    /**
+     * Get the authenticated user's profile information.
+     */
+    public function me(Request $request)
     {
-      /*  $validated = $request->validate([
-            'query' => 'required|string|min:1',
+        return response()->json([
+            'user' => $request->user(),
         ]);
-*/
-        $users = User::where('username', 'LIKE', '%' . $username . '%')
-            ->limit(10)     
-            ->get(['user_id', 'username', 'email', 'avatar_url']); 
+    }
+
+    /**
+     * Update the authenticated user's profile information.
+     */
+    public function update(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'username' => [
+                'sometimes', 
+                'string', 
+                'max:50', 
+                Rule::unique('users')->ignore($user->user_id, 'user_id')
+            ],
+            'first_name' => 'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100',
+            'bio' => 'nullable|string|max:1000',
+        ]);
+
+        $user->update($validated);
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $user->fresh(),
+        ]);
+    }
+
+    /**
+     * Search for users by username, email, first name, or last name.
+     */
+    public function search(Request $request)
+    {
+        $query = $request->input('query');
+
+        if (!$query || strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $users = User::where('user_id', '!=', $request->user()->user_id) 
+            ->where(function ($q) use ($query) {
+                $q->where('username', 'like', "%{$query}%")
+                  ->orWhere('email', 'like', "%{$query}%")
+                  ->orWhere('first_name', 'like', "%{$query}%")
+                  ->orWhere('last_name', 'like', "%{$query}%");
+            })
+            ->limit(20)
+            ->get(['user_id', 'username', 'first_name', 'last_name', 'avatar_url', 'last_seen_at']);
 
         return response()->json($users);
     }
 
-    // Upload avatar
-    public function uploadAvatar(Request $request)
+    /**
+     * Get a user's profile information by their user ID.
+     */
+    public function show(User $user)
     {
-    $validated = $request->validate([
-        'avatar' => 'required|image|max:2048', // max 2MB
-    ]);
-
-    $user = $request->user();
-
-    
-    if ($user->avatar_url) {
-        $oldPath = str_replace('/storage/', '', $user->avatar_url);
-        Storage::disk('public')->delete($oldPath);
+        return response()->json([
+            'user_id' => $user->user_id,
+            'username' => $user->username,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'avatar_url' => $user->avatar_url,
+            'bio' => $user->bio,
+            'last_seen_at' => $user->last_seen_at,
+            'is_online' => $user->isOnline(),
+        ]);
     }
 
-    // Завантажуємо новий
-    $path = $validated['avatar']->store('avatars', 'public');
+    /**
+     * Update the user's last seen timestamp.
+     * Can be called periodically from frontend (polling) or via websockets.
+     */
+    public function updateLastSeen(Request $request)
+    {
+        $request->user()->updateLastSeen();
 
-    
-    $user->avatar_url = '/storage/' . $path;
-    $user->save();
-
-    return response()->json([
-        'message' => 'Avatar uploaded successfully',
-        'avatar_url' => $user->avatar_url,
-    ]);
+        return response()->json(['message' => 'Status updated']);
+    }
 }
-     public function updateBio(Request $request)
-     {
-    $validated = $request->validate([
-        'bio' => 'nullable|string|max:1000',
-    ]);
-
-    $user = $request->user();
-    $user->bio = $validated['bio'];
-    $user->save();
-
-    return response()->json([
-        'message' => 'Bio updated successfully',
-        'bio' => $user->bio,
-    ]);
-}
-
-
-
-}
-

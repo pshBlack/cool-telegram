@@ -36,8 +36,8 @@ return [
     */
 
     'guards' => [
-        'api' => [
-            'driver' => 'sanctum',
+        'web' => [
+            'driver' => 'session',
             'provider' => 'users',
         ],
     ],

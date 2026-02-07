@@ -2,150 +2,210 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\Message;
-use App\Models\Chat;
+use App\Events\MessageRead;
 use App\Events\MessageSent;
-use App\Events\MessageEdited;
-use App\Events\MessageDeleted;
-
+use App\Events\UserTyping;
+use App\Models\Chat;
+use App\Models\Message;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MessageController extends Controller
 {
-
-    public function sendMessage(Request $request, $chatId)
+    /**
+     * Get messages for a chat.
+     */
+    public function index(Request $request, Chat $chat)
     {
-        $validated = $request->validate([
-            'content' => 'required|string',
-        ]);
+        // Verify user is participant
+        $this->authorizeParticipant($request, $chat);
 
-        $authUser = $request->user();
-
-        // validate chat membership
-        $chat = Chat::where('chat_id', $chatId)
-            ->whereHas('users', fn($q) => $q->where('chat_participants.user_id', $authUser->user_id))
-            ->first();
-
-        if (!$chat) {
-            return response()->json(['message' => 'You are not in this chat'], 403);
-        }
-
-        $message = Message::create([
-            'chat_id' => $chat->chat_id,
-            'sender_id' => $authUser->user_id,
-            'content' => $validated['content'],
-            'sent_at' => now(),
-            'is_read' => false,
-        ]);
-        event(new MessageSent($message));
-
-        return response()->json([
-            'message' => 'Message sent',
-            'data' => $message->load('sender')
-        ], 201);
-
-        //event(new SendMessage($chatId, $validated['content'], $authUser));
-        
-
-    }
-    
-    public function deleteMessage(Request $request, $messageId)
-    {
-        $authUser = $request->user();
-
-        $message = Message::find($messageId);
-
-       if (!$message) {
-        return response()->json(['message' => 'Message not found'], 404);
-    }
-     // validate sender message
-    if ($message->sender_id !== $authUser->user_id) {
-        return response()->json(['message' => 'You can only delete your own messages'], 403);
-    }
-
-    $message->delete();
-
-    event(new MessageDeleted($messageId, $message->chat_id));
-
-    return response()->json(['message' => 'Message deleted']);
-
-    }
-
-
-
-    // history of messages in chat
-    public function getMessages(Request $request, $chatId)
-    {
-        $authUser = $request->user();
-
-        $chat = Chat::where('chat_id', $chatId)
-            ->whereHas('users', fn($q) => $q->where('chat_participants.user_id', $authUser->user_id))
-            ->first();
-
-        if (!$chat) {
-            return response()->json(['message' => 'You are not in this chat'], 403);
-        }
-
-        $messages = Message::where('chat_id', $chat->chat_id)
-            ->orderBy('sent_at', 'asc')
-            ->with('sender:user_id,username,avatar_url')
-            ->get();
-            //->paginate(50); // це типу зробити на фронтенду інфініті скрол в гору щоб підгружались повідомлення по 50
+        $messages = $chat->messages()
+            ->with(['sender', 'media'])
+            ->latest('sent_at')
+            ->paginate(50);
 
         return response()->json($messages);
     }
 
-    public function editMessage(Request $request, $messageId)
+    /**
+     * Send a new message.
+     */
+    public function store(Request $request, Chat $chat)
     {
+        // Verify user is participant
+        $this->authorizeParticipant($request, $chat);
+
         $validated = $request->validate([
-            'content' => 'required|string|max:5000',
+            'content' => 'nullable|string|max:10000',
+            'type' => 'nullable|string|in:text,image,video,document,audio,attachment',
         ]);
 
-        $authUser = $request->user();
+        $message = Message::create([
+            'chat_id' => $chat->chat_id,
+            'sender_id' => $request->user()->user_id,
+            'content' => $validated['content'] ?? null,
+            'type' => $validated['type'] ?? 'text',
+        ]);
 
-        $message = Message::find($messageId);
+        // Load relationships
+        $message->load(['sender', 'media']);
 
-        if (!$message) {
-            return response()->json(['message' => 'Message not found'], 404);
-        }
-
-        // validate sender message
-        
-        if ($message->sender_id !== $authUser->user_id) {
-            return response()->json(['message' => 'You can only edit your own messages'], 403);
-        }
-
-        $message->content = $validated['content'];
-        $message->save();
-
-        event(new MessageEdited($message));
+        // Broadcast the message
+        broadcast(new MessageSent($message))->toOthers();
 
         return response()->json([
-            'message' => 'Message edited',
-            'data' => $message->load('sender')
+            'message' => 'Message sent successfully',
+            'data' => $message,
+        ], 201);
+    }
+
+    /**
+     * Get a specific message.
+     */
+    public function show(Request $request, Chat $chat, Message $message)
+    {
+        // Verify user is participant
+        $this->authorizeParticipant($request, $chat);
+
+        // Verify message belongs to chat
+        if ($message->chat_id !== $chat->chat_id) {
+            return response()->json([
+                'message' => 'Message not found in this chat',
+            ], 404);
+        }
+
+        $message->load(['sender', 'media']);
+
+        return response()->json($message);
+    }
+
+    /**
+     * Update a message.
+     */
+    public function update(Request $request, Chat $chat, Message $message)
+    {
+        // Verify user is participant
+        $this->authorizeParticipant($request, $chat);
+
+        // Verify message belongs to user
+        if ($message->sender_id !== $request->user()->user_id) {
+            return response()->json([
+                'message' => 'You can only edit your own messages',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'content' => 'required|string|max:10000',
+        ]);
+
+        $message->update($validated);
+
+        return response()->json([
+            'message' => 'Message updated successfully',
+            'data' => $message->fresh(['sender', 'media']),
         ]);
     }
 
-    // mark message as read
-    public function markAsRead(Request $request, $messageId)
+    /**
+     * Delete a message (soft delete).
+     */
+    public function destroy(Request $request, Chat $chat, Message $message)
     {
-        $authUser = $request->user();
+        // Verify user is participant
+        $this->authorizeParticipant($request, $chat);
 
-        $message = Message::find($messageId);
-
-        if (!$message) {
-            return response()->json(['message' => 'Message not found'], 404);
+        // Verify message belongs to user
+        if ($message->sender_id !== $request->user()->user_id) {
+            return response()->json([
+                'message' => 'You can only delete your own messages',
+            ], 403);
         }
 
-        // validate chat membership
-        $chat = $message->chat;
-        if (!$chat->users()->where('users.user_id', $authUser->user_id)->exists()) {
-            return response()->json(['message' => 'You are not in this chat'], 403);
+        $message->delete();
+
+        return response()->json([
+            'message' => 'Message deleted successfully',
+        ]);
+    }
+
+    /**
+     * Mark a message as read.
+     */
+    public function markAsRead(Request $request, Chat $chat, Message $message)
+    {
+        // Verify user is participant
+        $this->authorizeParticipant($request, $chat);
+
+        // Don't mark own messages as read
+        if ($message->sender_id === $request->user()->user_id) {
+            return response()->json([
+                'message' => 'Cannot mark own message as read',
+            ], 400);
         }
 
-        $message->is_read = true;
-        $message->save();
+        if (!$message->is_read) {
+            $message->markAsRead();
+            
+            // Broadcast that message was read
+            broadcast(new MessageRead($message, $request->user()->user_id))->toOthers();
+        }
 
-        return response()->json(['message' => 'Marked as read']);
+        return response()->json([
+            'message' => 'Message marked as read',
+            'data' => $message,
+        ]);
+    }
+
+    /**
+     * Mark all messages in chat as read.
+     */
+    public function markAllAsRead(Request $request, Chat $chat)
+    {
+        // Verify user is participant
+        $this->authorizeParticipant($request, $chat);
+
+        $chat->markAsReadForUser($request->user()->user_id);
+
+        return response()->json([
+            'message' => 'All messages marked as read',
+        ]);
+    }
+
+    /**
+     * Send typing indicator.
+     */
+    public function typing(Request $request, Chat $chat)
+    {
+        // Verify user is participant
+        $this->authorizeParticipant($request, $chat);
+
+        $validated = $request->validate([
+            'is_typing' => 'required|boolean',
+        ]);
+
+        broadcast(new UserTyping(
+            $chat->chat_id,
+            $request->user(),
+            $validated['is_typing']
+        ))->toOthers();
+
+        return response()->json([
+            'message' => 'Typing indicator sent',
+        ]);
+    }
+
+    /**
+     * Verify user is a participant in the chat.
+     */
+    protected function authorizeParticipant(Request $request, Chat $chat): void
+    {
+        $isParticipant = $chat->participants()
+            ->where('user_id', $request->user()->user_id)
+            ->exists();
+
+        if (!$isParticipant) {
+            abort(403, 'You are not a participant in this chat');
+        }
     }
 }
